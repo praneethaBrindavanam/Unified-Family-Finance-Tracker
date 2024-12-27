@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unified Family Expense Tracker</title>
+  <link rel="stylesheet" href="./static/viewbudget.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="../static/alerts.css">
+</head>
+<body>
+    <style>
+        i:hover{
+            cursor: pointer;
+        }
+    </style>
+  <div class="alert-container">
+    <h2>Budgets</h2>
+    <div class="alert-table">
+      <table id="alertTable">
+        <thead>
+          <tr>
+            <th>Id</th>
+            <th>Category</th>
+            <th>Limit</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>UserId</th>
+            <th>Update</th>
+            <th>Delete</th>
+            <th>Renew</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for budget in budgets %}
+              <tr>
+                <td>{{budget[0]}}</td>
+                <td>{{budget[1]}}</td>
+                <td>{{budget[2]}}</td>
+                <td>{{budget[3]}}</td>
+                <td>{{budget[4]}}</td>
+                <td>{{budget[5]}}</td>
+                <td>
+                    <i class="fas fa-edit" style="color: #3498db;"></i>
+                </td>
+                <td onclick="deleteBudget()">
+                    <i class="fas fa-trash-alt" style="color: #e74c3c;"></i>
+                </td>
+                <td>
+                    <i class="fas fa-sync-alt" style="color: #27ae60;"></i>
+                </td>
+              </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <script>
+        async function deleteBudget(id){
+            if(confirm("Are you sure")){
+                response=await fetch("http://127.0.0.1:5000/Budget",{
+                headers:{
+                    'Content-Type':'application/json    '
+                },
+                method:"DELETE",
+                body:JSON.stringify({budget_id:id})
+            })
+            }
+        }
+    </script>
+</body>
+</html>

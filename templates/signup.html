@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .sign-up-form {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 300px;
+        }
+        .sign-up-form h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .sign-up-form label {
+            font-size: 14px;
+            margin-bottom: 5px;
+            display: block;
+        }
+        .sign-up-form input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        .sign-up-form button {
+            width: 100%;
+            padding: 10px;
+            background-color: #0d0d88;
+            border: none;
+            color: white;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .sign-up-form button:hover {
+            background-color: #0d0d88;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 30px;
+            width: 400px;
+            text-align: center;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .modal-content h2 {
+            color: #0d0d88;
+            margin-bottom: 15px;
+        }
+
+        .modal-content p {
+            color: #555;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .modal-content a {
+            text-decoration: none;
+            color: white;
+            background-color: #0d0d88;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+        .modal-content a:hover {
+            background-color:#0d0d88;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 24px;
+            font-weight: bold;
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <form class="sign-up-form" id="signup-form">
+        <h2>Sign Up</h2>
+        <label for="name">Full Name</label>
+        <input type="text" id="name" name="name" placeholder="Enter your full name" required>
+
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" placeholder="Enter your username" required>
+
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" placeholder="Enter a password" required>
+
+        <label for="Confirm-password">Confirm Password</label>
+        <input type="password" id="Confirm-password" name="Confirm-password" placeholder="Re-enter your password" required>
+
+        <label for="phone">Phone Number</label>
+        <input type="tel" id="phone" name="phone" placeholder="Enter your phone number" required>
+
+        <label for="email">Email ID</label>
+        <input type="email" id="email" name="email" placeholder="Enter your email address" required>
+
+        <p>Get OTP verification <a href="{{ url_for('verification') }}">Verify</a></p>
+
+
+        <button type="submit">Sign Up</button>
+    </form>
+
+    <!-- Modal for Success Message -->
+     <!--
+    <div id="signupModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Signup Successful!</h2>
+            <p>You have successfully signed up. Please proceed to the login page.</p>
+            <a href="{{ url_for('login') }}">Go to Login</a>
+        </div>
+    </div>
+-->
+    <div id="signupModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Signup Successful!</h2>
+            <p>You have successfully signed up. Please proceed to the login page.</p>
+            <a href="{{ url_for('login') }}">Go to Login</a>
+        </div>
+    </div>
+        <!--
+    <script>
+        // Get the form element and the modal
+        const form = document.getElementById('signup-form');
+        const modal = document.getElementById('signupModal');
+        const closeModal = document.getElementsByClassName('close')[0];
+
+        // When the form is submitted, prevent default and show the popup
+        form.onsubmit = function(event) {
+            event.preventDefault(); // Prevent form submission
+            
+            // Display the modal
+            modal.style.display = 'flex';
+        };
+
+        // Close the modal when the user clicks the close button
+        closeModal.onclick = function() {
+            modal.style.display = 'none';
+        };
+
+        // Close the modal if the user clicks outside of the modal
+        window.onclick = function(event) {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        };
+    -->
+    </script>
+    <!--
+    <script>
+        form.onsubmit = async function (event) {
+            event.preventDefault(); // Prevent form submission to reload the page
+
+            // Collect form data
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+
+            try {
+                // Send the form data to the server
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                const result = await response.json();
+
+                // Check if the server response indicates success
+                if (response.ok && result.success) {
+                    // Display the modal
+                    modal.style.display = 'flex';
+                } else {
+                    // Handle errors (e.g., show a flash message)
+                    alert(result.message || 'Signup failed. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error during signup:', error);
+                alert('An error occurred. Please try again later.');
+            }
+        };
+
+    </script>
+    -->
+    <script>
+        // Get the form element and the modal
+        const form = document.getElementById('signup-form');
+        const modal = document.getElementById('signupModal');
+        const closeModal = document.getElementsByClassName('close')[0];
+
+        // When the form is submitted, prevent default and send the data via AJAX
+        form.onsubmit = async function(event) {
+            event.preventDefault(); // Prevent form submission from refreshing the page
+
+            // Collect form data
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+            console.log("Form Data Submitted:", data); // Debugging log
+
+            try {
+                // Send the form data to the server
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                const result = await response.json();
+                console.log("Response from Server:", result); // Debugging log
+
+                // Check if the server response indicates success
+                if (response.ok && result.success) {
+                    console.log("Signup successful!");
+                    // Show modal after successful signup
+                    modal.style.display = 'flex';
+                } else {
+                    alert(result.message || 'Signup failed. Please try again.');
+                }
+            } catch (error) {
+                console.error("Error during signup:", error);
+                alert('An error occurred. Please try again later.');
+            }
+        };
+
+        // Close the modal when the user clicks the close button
+        closeModal.onclick = function() {
+            modal.style.display = 'none';
+        };
+
+        // Close the modal if the user clicks outside of the modal
+        window.onclick = function(event) {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        };
+    </script>
+</body>
+</html>

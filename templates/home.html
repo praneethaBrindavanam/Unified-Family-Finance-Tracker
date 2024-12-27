@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Finance Tracker</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #0d0d88;
+      color: white;
+    }
+
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 30px;
+      background-color: #0d0d88;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .nav-links a {
+      margin: 0 15px;
+      color: white;
+      text-decoration: none;
+    }
+
+    .auth-buttons button {
+      margin-left: 10px;
+      padding: 10px 15px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .login {
+      background-color: orange;
+      color: white;
+      border: 1px solid white;
+    }
+
+    .signup {
+      background-color: orange;
+      color: white;
+    }
+
+    .hero {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 50px 80px;
+      background-color: #0d0d88;
+    }
+
+    .hero-text {
+      max-width: 500px;
+    }
+
+    .hero-text h1 {
+      font-size: 40px;
+      margin-bottom: 10px;
+    }
+
+    .hero-text p {
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+
+    .cta {
+      padding: 10px 20px;
+      background-color: orange;
+      border: none;
+      color: white;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .hero-image img {
+      width: 300px;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="logo"><a href="home.html" style="color: white; text-decoration: none;">Finance Tracker</a></div>
+    <div class="nav-links">
+      <a href="home.html">Home</a>
+      <a href="#">Use Tracker</a>
+      <a href="#">How it works</a>
+      <a href="#">Support</a>
+    </div>
+    <div class="auth-buttons">
+      <a href="{{ url_for('login') }}"><button class="login">Log In</button></a>
+      <a href="{{ url_for('signup') }}"><button class="signup">Sign Up</button></a>  
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-text">
+      <h1>Take Control of Your Finances</h1>
+      <p>
+        Track your income and expenses effortlessly. Manage your budget, set
+        financial goals, and make smarter decisions for a more secure future.
+      </p>
+      <a href="{{ url_for('signup') }}"><button class="cta">Sign Up Now</button></a>
+    </div>
+    <div class="hero-image">
+  </section>
+</body>
+</html>

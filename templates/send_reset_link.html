@@ -1,0 +1,26 @@
+<form id="reset-link-form">
+    <input type="email" id="email" placeholder="Enter your email" required />
+    <button type="submit">Send Reset Link</button>
+  </form>
+  
+  <script>
+    document.getElementById('reset-link-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+  
+      try {
+        const response = await fetch('http://127.0.0.1:5000/send-reset-link', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+  
+        const result = await response.json();
+        alert(result.message);
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to send reset link.');
+      }
+    });
+  </script>
+  

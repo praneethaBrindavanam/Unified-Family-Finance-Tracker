@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OTP Verification with Resend Option</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .form-container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            text-align: center;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 15px;
+            background-color:#0d0d88;
+            border: none;
+            color: white;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background-color:#0d0d88 ;
+        }
+        .timer {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #888;
+        }
+        .resend {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #007bff;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .resend:hover {
+            color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>OTP Verification</h2>
+        <input type="text" id="otp" placeholder="Enter OTP" required>
+        <button id="verify-btn" onclick="verifyOtp()" disabled>Verify OTP</button>
+        <div class="timer" id="timer">Time left: 02:00</div>
+        <div class="resend" id="resend-otp" onclick="resendOtp()">Resend OTP</div>
+    </div>
+
+    <script>
+        let timerInterval;
+        let timeLeft = 120; // 2 minutes in seconds
+
+        // Function to simulate sending OTP
+        function sendOtp() {
+            alert('OTP sent to your email. Please enter it within 2 minutes.');
+
+            startTimer();
+        }
+
+        // Function to resend OTP
+        function resendOtp() {
+            clearInterval(timerInterval); // Clear any existing timer
+            timeLeft = 120; // Reset the timer
+            sendOtp(); // Resend OTP and start the timer
+        }
+
+        // Start the timer
+        function startTimer() {
+            document.getElementById("verify-btn").disabled = false;
+
+            timerInterval = setInterval(() => {
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+
+                document.getElementById("timer").textContent =
+                    `Time left: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+                if (timeLeft > 0) {
+                    timeLeft--;
+                } else {
+                    clearInterval(timerInterval);
+                    document.getElementById("timer").textContent = "Time expired. Please resend OTP.";
+                    document.getElementById("verify-btn").disabled = true;
+                }
+            }, 1000);
+        }
+
+        // Simulate OTP verification
+        function verifyOtp() {
+            const otp = document.getElementById('otp').value;
+
+            // In a real application, verify the OTP with your backend
+            if (otp === "123456") { // Replace "123456" with dynamic OTP logic
+                clearInterval(timerInterval);
+                alert('OTP Verified!');
+            } else if (otp === "") {
+                alert('Please enter the OTP.');
+            } else {
+                alert('Invalid OTP. Please try again.');
+            }
+        }
+
+        // Automatically send OTP on page load
+        sendOtp();
+    </script>
+</body>
+</html>

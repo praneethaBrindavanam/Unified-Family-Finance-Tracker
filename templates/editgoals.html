@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Goals</title>
+    <link rel="stylesheet" href="{{url_for('static' , filename = 'style.css')}}">
+</head>
+<body>
+    
+    <form action="" method="post">
+       
+        <label for="target_amount">Target Amount:</label>
+        <input
+          type="number"
+          id="target_amount"
+          name="target_amount"
+          step="0.01"
+          value="{{datas.Target_amount}}"
+          required
+        />
+  
+        <label for="start_date">Start Date:</label>
+        <input type="date" id="start_date" name="start_date" required value="{{datas.start_date}}" />
+  
+        <label for="end_date">End Date:</label>
+        <input type="date" id="end_date" name="end_date" required value="{{datas.end_date}}" />
+  
+        <label for="goal_status">Goal Status:</label>
+        <select id="goal_status" name="goal_status" required>
+          <option value="On-going" {% if datas.goal_status == 'On-going' %}selected{% endif %}>On-going</option>
+          <option value="Completed" {% if datas.goal_status == 'Completed' %}selected{% endif %}>Completed</option>
+          <option value="Cancelled" {% if datas.goal_status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+        </select>
+        
+  
+        <label for="goal_description">Goal Description:</label>
+        <input
+          type="text"
+          id="goal_description"
+          name="goal_description"
+          required
+          value="{{datas.Goal_description}}"
+        />
+  
+        <label for="achieved_amount">Achieved Amount:</label>
+        <input
+          type="number"
+          id="achieved_amount"
+          name="achieved_amount"
+          step="0.01"
+          required
+        />
+
+        <label for="goal_type">Goal Type:</label>
+      <select id="goal_type" name="goal_type" required>
+        <option value="Personal">Personal</option>
+        <option value="Family">Family</option>
+      </select>
+  
+        <button type="submit">Submit</button>
+      </form>
+    
+</body>
+</html>

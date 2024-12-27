@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expenses</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        nav{
+            padding: 30px;
+        }
+        nav ul {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        nav li {
+            margin-left: 2.5rem;
+            margin-right: 2.5rem;
+            color: #fff;
+        }
+        nav li a{
+            text-decoration: none;
+            color: #fff;
+        }
+        nav li a .active{
+            color: #92a1c2;
+        }
+        nav li a:hover{
+            color: #bd6c73;
+        }
+        body{
+            background-color: #6b597f;
+        }
+    </style>
+</head>
+<body>
+    <!--
+    <nav style="background-color: #2e365a;"><ul>
+        <li><a href="">Home</a></li>
+        <li><a href="/expenses" class="active">Expenses</a></li>
+        <li><a href="">Budget</a></li>
+        <li><a href="">Goals</a></li></ul>
+    </nav>
+    -->
+    <div class="container mt-5">
+        <h2 class="text-center" style="color: #fff;">Expenses</h2>
+        <div class="text-center mb-3" >
+            <a href="/add_expenses" class="btn btn-primary" style="background-color: #bd6c73;">Add New Expense</a>
+        </div>
+        <table class="table table-bordered table-striped" style="background-color: #a2869c;">
+            <thead class="table-dark" style="background-color: #a2869c; color: #ffffff;">
+                <tr>
+                    <th>Expense ID</th>
+                    <th>Category</th>
+                    <th>Amount</th>
+                    <th>Description</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Receipt</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for expense in expenses %}
+                <tr style="background-color: #d1b1c6;">
+                    <td>{{ expense.ExpenseID }}</td>
+                    <td>{{ expense.categoryid }}</td>
+                    <td>{{ expense.amount }}</td>
+                    <td>{{ expense.expensedesc }}</td>
+                    <td>{{ expense.expensedate }}</td>
+                    <td>{{ expense.expensetime }}</td>
+                    <td>{{ expense.receiptpath }}</td>
+                </tr>
+                {% endfor %}
+                {% if not expenses %}
+                <tr>
+                    <td colspan="7" class="text-center" style="background-color: #d1b1c6; color: #000000;">No expenses to display</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+        
+    </div>
+</body>
+</html>

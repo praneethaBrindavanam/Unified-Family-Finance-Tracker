@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Your Expenses</title>
+    <!-- Include Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Include Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f8f9fa;
+
+        }
+        nav{
+            padding: 30px;
+        }
+        nav ul {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        nav li {
+            margin-left: 2.5rem;
+            margin-right: 2.5rem;
+            color: #fff;
+        }
+        nav li a{
+            text-decoration: none;
+            color: #fff;
+        }
+        nav li a .active{
+            color: #92a1c2;
+        }
+        nav li a:hover{
+            color: #bd6c73;
+        }
+        body{
+            background-color: #6b597f;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        .form-label {
+            font-weight: bold;
+        }
+        .drag-drop-box {
+            border: 2px dashed #3f5b8d;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px;
+            color: #6c757d;
+        }
+        .drag-drop-box:hover {
+            background-color: #e7f1ff;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <!--
+    <nav style="background-color: #2e365a;"><ul>
+        <li><a href="">Home</a></li>
+        <li><a href="/" class="active">Expenses</a></li>
+        <li><a href="">Budget</a></li>
+        <li><a href="">Goals</a></li></ul>
+    </nav>
+    -->
+    <div class="container">
+        <h2 class="text-center mb-4">Expense Entry Form</h2>
+        <form action="/submit" method="POST" enctype="multipart/form-data" onsubmit="return validateDateTime()">
+            <div class="mb-3">
+                <label for="date" class="form-label">Date <span class="text-danger">*</span></label>
+                <input type="date" id="date" name="date" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label for="time" class="form-label">Time <span class="text-danger">*</span></label>
+                <input type="text" id="time" name="time" class="form-control" placeholder="Select Time" required>
+            </div>
+            <div class="mb-3">
+                <label for="category" class="form-label">Category <span class="text-danger">*</span></label>
+                <select id="category" name="category" class="form-select" required>
+                    <option value="" selected>--Select Category--</option>
+                    <option value=1>Food</option>
+                    <option value=2>Travel</option>
+                    <option value=3>Grocery</option>
+                    <option value=4>Stationary</option>
+                    <option value=5>Other</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="amount" class="form-label">Amount <span class="text-danger">*</span></label>
+                <input type="number" id="amount" name="amount" class="form-control" min="1" placeholder="Enter the amount" required>
+            </div>
+            <div class="mb-3">
+                <label for="description" class="form-label">Description</label>
+                <textarea id="description" name="description" class="form-control" rows="3" placeholder="Optional"></textarea>
+            </div>
+            <div class="mb-3">
+                <label for="receipt" class="form-label">Receipt (Drag & Drop or Browse)</label>
+                <div id="drop-area" class="drag-drop-box">
+                    <p>Drag and drop a file here, or click to browse</p>
+                    <input type="file" id="receipt" name="receipt" class="form-control" accept=".jpg, .jpeg, .png, .pdf" hidden>
+                </div>
+            </div>
+            <div class="text-center">
+                <button type="submit" class="btn btn-primary w-100" style="background-color: #bd6c73;">Submit Expense</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Include Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Include Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+    <script>
+        const dateInput = document.getElementById('date');
+        const timeInput = document.getElementById('time');
+        const dropArea = document.getElementById('drop-area');
+        const fileInput = document.getElementById('receipt');
+
+        // Restrict date to today or earlier
+        const today = new Date();
+        const maxDate = today.toISOString().split('T')[0];
+        dateInput.setAttribute('max', maxDate);
+
+        // Flatpickr for Time Picker
+        flatpickr(timeInput, {
+            enableTime: true,
+            noCalendar: true,
+            dateFormat: "H:i",
+            time_24hr: true,
+        });
+
+        // Drag and drop file upload
+        dropArea.addEventListener('click', () => fileInput.click());
+
+        dropArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropArea.style.backgroundColor = '#e7f1ff';
+        });
+
+        dropArea.addEventListener('dragleave', () => {
+            dropArea.style.backgroundColor = '';
+        });
+
+        dropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropArea.style.backgroundColor = '';
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                fileInput.files = e.dataTransfer.files;
+                dropArea.querySelector('p').innerText = file.name;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unified Family Expense Tracker</title>
+  <link rel="stylesheet" href="./static/alerts.css">
+</head>
+<body>
+  <div class="alert-container">
+    <h2>Recent Alerts</h2>
+    <!-- Alerts Table -->
+    <div class="alert-table">
+      <h3>Table View</h3>
+      <table id="alertTable">
+        <thead>
+          <tr>
+            <th>Id</th>
+            <th>Type</th>
+            <th>Message</th>
+            <th>Timestamp</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for alert in alerts %}
+              <tr>
+                <td>{{alert[0]}}</td>
+                <td>{{alert[2]}}</td>
+                <td>{{alert[3]}}</td>
+                <td>{{alert[4]}}</td>
+                <td>{{'Resolved' if alert[5] else 'Unresolved'}}</td>
+                <td></td>
+              </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  <!-- Modal for Viewing Alert Details -->
+  <div id="alertModal" class="modal-overlay">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">×</span>
+      <h3>Alert Details</h3>
+      <p id="alertDetails"></p>
+    </div>
+  </div>
+</body>
+</html>

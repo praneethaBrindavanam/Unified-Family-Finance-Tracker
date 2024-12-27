@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add Amount</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </head>
+  <body>
+    <h1>Add Amount to Goal</h1>
+    <p>Goal Description: {{ data.Goal_description }}</p>
+    <p id="Target_amount">Target Amount: {{ data.Target_amount }}</p>
+    <p id="Achieved_amount">Achieved Amount: {{ data.Achieved_amount }}</p>
+
+    <form method="POST" onsubmit="return validate_achieved_amount()">
+      <label for="additional_amount">Enter Amount to Add:</label>
+      <input
+        type="number"
+        id="additional_amount"
+        name="additional_amount"
+        required
+        autofocus
+      />
+      <p id="alert" style="color:red;"></p>
+      <button type="submit">Add Amount</button>
+    </form>
+    <script>
+      function validate_achieved_amount() {
+        var additional_amount = parseFloat(document.getElementById("additional_amount").value);
+        var target_amount = parseFloat(document.getElementById("Target_amount").textContent.replace('Target Amount: ', ''));
+        var achieved_amount = parseFloat(document.getElementById("Achieved_amount").textContent.replace('Achieved Amount: ', ''));
+        var total = target_amount - achieved_amount;
+        if (additional_amount == total) {
+          document.getElementById("alert").innerText = "The additional Amount Exceeds the Target Goal amount";
+          return false; 
+        }
+
+        return true;  
+      }
+    </script>
+  </body>
+</html>
