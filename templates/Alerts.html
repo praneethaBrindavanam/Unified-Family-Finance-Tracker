@@ -11,7 +11,6 @@
     <h2>Recent Alerts</h2>
     <!-- Alerts Table -->
     <div class="alert-table">
-      <h3>Table View</h3>
       <table id="alertTable">
         <thead>
           <tr>
@@ -30,7 +29,6 @@
                 <td>{{alert[3]}}</td>
                 <td>{{alert[4]}}</td>
                 <td>{{'Resolved' if alert[5] else 'Unresolved'}}</td>
-                <td></td>
               </tr>
           {% endfor %}
         </tbody>

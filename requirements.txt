@@ -4,3 +4,5 @@ PyMysql
 Pandas
 NumPy
 matplotlib
+cryptography
+Flask-Mail
