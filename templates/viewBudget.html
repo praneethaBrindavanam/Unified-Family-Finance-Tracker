@@ -13,6 +13,26 @@
         i:hover{
             cursor: pointer;
         }
+        #updateSection {
+          display: none;
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-color: rgba(0, 0, 0, 0.5);
+          justify-content: center;
+          align-items: center;
+        }
+        .modal-content {
+          background-color: white;
+          padding: 20px;
+          border-radius: 10px;
+          width: 400px;
+        }
+        button {
+          margin-top: 10px;
+        }
     </style>
   <div class="alert-container">
     <h2>Budgets</h2>
@@ -40,10 +60,11 @@
                 <td>{{budget[3]}}</td>
                 <td>{{budget[4]}}</td>
                 <td>{{budget[5]}}</td>
-                <td>
-                    <i class="fas fa-edit" style="color: #3498db;"></i>
+                <td onclick="openUpdateModal('{{budget[0]}}', '{{budget[1]}}', '{{budget[2]}}', '{{budget[3]}}', '{{budget[4]}}', '{{budget[5]}}')">
+
+                <i class="fas fa-edit" style="color: #3498db;"></i>
                 </td>
-                <td onclick="deleteBudget()">
+                <td onclick="deleteBudget('{{budget[0]}}')">
                     <i class="fas fa-trash-alt" style="color: #e74c3c;"></i>
                 </td>
                 <td>
@@ -54,18 +75,118 @@
         </tbody>
       </table>
     </div>
+    <div id="updateSection">
+      <div class="modal-content">
+        <h2>Update Budget</h2>
+        <form id="updateForm" onsubmit="handleUpdate(event)">
+          <label for="budgetId">Budget ID:</label>
+          <input type="text" id="budgetId" name="budgetId" disabled><br><br>
+  
+          <label for="budgetAmount">Amount:</label>
+          <input type="number" id="budgetAmount" name="budgetAmount"><br><br>
+  
+          <label for="budgetCategory">Category:</label>
+          <select id="budgetCategory" name="budgetCategory">
+            <option value=1>Category 1</option>
+            <option value=2>Category 2</option>
+            <option value=3>Category 3</option>
+          </select><br><br>
+  
+          <label for="startDate">Start Date:</label>
+          <input type="date" id="startDate" name="startDate"><br><br>
+  
+          <label for="endDate">End Date:</label>
+          <input type="date" id="endDate" name="endDate"><br><br>
+  
+          <button type="submit">Update Budget</button>
+          <button type="button" onclick="closeUpdateModal()">Cancel</button>
+        </form>
+      </div>
+    </div>  
     <script>
-        async function deleteBudget(id){
-            if(confirm("Are you sure")){
-                response=await fetch("http://127.0.0.1:5000/Budget",{
-                headers:{
-                    'Content-Type':'application/json    '
-                },
-                method:"DELETE",
-                body:JSON.stringify({budget_id:id})
-            })
-            }
+        async function deleteBudget(id) {
+              if (confirm("Are you sure?")) {
+              const response = await fetch("http://127.0.0.1:5000/Budget", {
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  method: "DELETE",
+                  body: JSON.stringify({ budget_id: id })
+              });
+        if (response.ok) {
+            const msg = document.createElement("p");
+            msg.innerText = "Budget deleted successfully";
+            msg.style.color = "green";
+            const container = document.getElementsByClassName("alert-container")[0];
+            container.appendChild(msg);
+            setTimeout(() => {
+                msg.remove();
+                function reload(){
+                   window.location.reload();
+                }
+                reload();
+            }, 1000);
+        } else {
+            alert("Failed to delete the budget.");
         }
+    }
+}
+
+
+
+  function openUpdateModal(budgetId, budgetName, budgetAmount, category, startDate, endDate) {
+      document.getElementById("updateSection").style.display = "flex";
+      document.getElementById("budgetId").value = budgetId || "";
+      document.getElementById("budgetAmount").value = budgetAmount || "";
+      document.getElementById("budgetCategory").value = category || 1;
+      document.getElementById("startDate").value = startDate || "";
+      document.getElementById("endDate").value = endDate || "";
+    }
+
+    // Function to Handle Update Form Submission
+    async function handleUpdate(event) {
+      event.preventDefault(); // Prevent form submission
+      const updatedData = {
+        budget_id: document.getElementById("budgetId").value,
+        limit: document.getElementById("budgetAmount").value,
+        category_id: document.getElementById("budgetCategory").value,
+        start_date: document.getElementById("startDate").value,
+        end_date: document.getElementById("endDate").value
+      };
+      const response=await fetch('http://127.0.0.1:5000/Budget',{
+        method:"PUT",
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body:JSON.stringify(updatedData)        
+      })
+      console.log("Updated Data:", updatedData,response.message);
+      const res=await response.json()
+      
+      if(res.message){
+      const msg = document.createElement("p");
+            msg.innerText = "Budget updated successfully";
+            msg.style.color = "yellow";
+            const container = document.getElementsByClassName("alert-container")[0];
+            container.appendChild(msg);
+            setTimeout(() => {
+                msg.remove();
+                function reload(){
+                   window.location.reload();
+                }
+                reload();
+            }, 1000);
+        } else {
+            alert("Failed to delete the budget.");
+        }
+
+      closeUpdateModal(); // Close the modal
+    }
+
+    // Function to Close Update Form
+    function closeUpdateModal() {
+      document.getElementById("updateSection").style.display = "none"; // Hide modal
+    }
     </script>
 </body>
 </html>

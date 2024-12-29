@@ -19,11 +19,11 @@ app.config['UPLOAD_FOLDER'] = 'Recipt_uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # SQLAlchemy Setup
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:1234@localhost:3306/unified_family'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost:3306/unified_family'
 #change the password and databasename as per your system
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = secrets.token_hex(16)
-DATABASE_URI = 'mysql+pymysql://root:1234@localhost/unified_family'
+DATABASE_URI = 'mysql+pymysql://root:root@localhost/unified_family'
 engine = create_engine(DATABASE_URI)
 metadata = MetaData()
 
@@ -401,7 +401,7 @@ def budgethome():
 
 @app.route('/addBudget')
 def bud():
-    return render_template('Budget.html')
+    return render_template('addBudget.html')
 
 @app.route('/viewAlerts')
 def ale():
@@ -434,6 +434,21 @@ def delete_budget():
         return jsonify({"message":f"Budget with id:-{data['budget_id']} is deleted"})
     except:
         return jsonify({"message":"No id with such budget"}),404
+    
+@app.route('/Budget',methods=['PUT'])
+def update_budget():
+    data=request.get_json()
+    try:
+        budget = db.session.query(Budget).filter_by(budget_id=data['budget_id']).first()
+        budget.limit = data['limit']
+        budget.start_date = data['start_date']
+        budget.end_date = data['end_date']
+        db.session.commit()
+        flash("Budget updated successfully")
+        return jsonify({"message":1}),200
+    except Exception as e:
+        print(str(e))
+        return jsonify({"message":0}),400
 
 @app.route('/Alerts',methods=["GET"])
 def get_alerts():
@@ -442,7 +457,6 @@ def get_alerts():
     for i in alerts:
         alert.append([i.alert_id,i.alert_date,i.alert_message,i.alert_type,i.budget_id,i.is_resolved])
     return jsonify({"alerts":alerts}),200
-
 
 GRAPH_DIR = "static/images"
 DOWNLOAD_DIR = "static/downloads"
