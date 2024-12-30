@@ -159,3 +159,114 @@ i.fa-sync-alt:hover {
         font-size: 14px; 
     }
 }
+
+i:hover{
+    cursor: pointer;
+}
+
+  /* Modal Background */
+  #updateSection {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  
+  /* Modal Box */
+  .modal-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    width: 320px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    animation: fadeIn 0.2s ease-in-out;
+  }
+  
+  /* Modal Heading */
+  .modal-content h2 {
+    margin-bottom: 15px;
+    font-size: 20px;
+    color: #444;
+  }
+  
+  /* Flexbox Container for the form fields */
+  .modal-content form {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+  
+  /* Style for each label and input to allow flexible layout */
+  .modal-content label {
+    font-size: 14px;
+    width: 100%; /* Full width for labels */
+    margin-bottom: 5px;
+  }
+  
+  /* Form Inputs and Select Elements */
+  .modal-content input,
+  .modal-content select {
+    width: 78%; /* Make inputs take half the width */
+    margin-left: 30px;
+    padding: 8px;
+    margin-bottom: 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+    box-sizing: border-box;
+  }
+  
+  /* Making the last item take full width */
+  .modal-content input:last-child,
+  .modal-content select:last-child {
+    width: 100%;
+  }
+  
+  /* Button Styles */
+  .modal-content button {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .modal-content button[type="submit"] {
+    background-color: #88c8ed;
+    color: white;
+  }
+  
+  .modal-content button[type="submit"]:hover {
+    background-color: hwb(226 26% 37%);
+  }
+  
+  .modal-content button[type="button"] {
+    background-color: #f44336;
+    color: white;
+    margin-top: 10px;
+  }
+  
+  .modal-content button[type="button"]:hover {
+    background-color: #d32f2f;
+  }
+  
+  /* Fade In Animation */
+  @keyframes fadeIn {
+    from {
+      transform: translateY(-20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }

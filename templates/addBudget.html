@@ -110,8 +110,15 @@
                     user_id: document.getElementById("Name").value
                 })
             });
-            const result = await response.json();
-            alert(result.message);
+            if(response.status=201){
+                const msg=document.createElement("p")
+                msg.innerText="Budget Created Successfully"
+                document.getElementsByClassName("container")[0].appendChild(msg)
+                setTimeout(() => {
+                    msg.remove();
+                    window.location.href='/budgethome';
+                }, 1500);
+            }
         } catch (err) {
             console.log(err);
         }

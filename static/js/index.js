@@ -21,16 +21,3 @@ function toggleDarkMode() {
   }
   
   window.onload = showSlides;
-
-  // Scroll-to-Top Button
-  const scrollToTopBtn = document.getElementById('scroll-to-top');
-  window.onscroll = () => {
-    if (document.body.scrollTop > 100 || document.documentElement.scrollTop > 100) {
-      scrollToTopBtn.style.display = 'block';
-    } else {
-      scrollToTopBtn.style.display = 'none';
-    }
-  };
-  scrollToTopBtn.onclick = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
