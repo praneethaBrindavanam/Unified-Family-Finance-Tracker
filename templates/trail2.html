@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/mystyles.css">
+    <title>Budget Visualization</title>
+</head>
+<body>
+    <div class="container">
+        <h1>Budget Visualization</h1>
+        <div class="controls">
+            <button onclick="generatePlot('pie')">Distribution by category</button>
+            <button onclick="generatePlot('bar')">Amounts by category</button>
+            <button onclick="generatePlot('line')">Expense trends over time</button>
+            <a href="/download_csv" class="btn">Download CSV</a>
+        </div>
+        <div class="plot-container">
+            <img id="plot" src="" >
+        </div>
+    </div>
+
+    <script>
+        function generatePlot(type) {
+            fetch('/generate_plot', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ plot_type: type })
+            })
+            .then(response => response.blob())
+            .then(blob => {
+                const url = URL.createObjectURL(blob);
+                document.getElementById('plot').src = url;
+            });
+        }
+    </script>
+</body>
+</html>

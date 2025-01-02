@@ -499,60 +499,395 @@ def get_alerts():
         alert.append([i.alert_id,i.alert_date,i.alert_message,i.alert_type,i.budget_id,i.is_resolved])
     return jsonify({"alerts":alerts}),200
 
-GRAPH_DIR = "static/images"
-DOWNLOAD_DIR = "static/downloads"
-os.makedirs(GRAPH_DIR, exist_ok=True)
-os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+#MODULE 5 
+@app.route('/mod5sprint2')
+def mod5sprint2():
+    return render_template('sprint2mod5.html')
 
-# Route for budget visualization
-@app.route('/organize')
-def budget_visualization():
-    # Query budget data
-    budgets = Budget.query.all()
-    df = pd.DataFrame([{ 'category_id': b.category_id, 'limit': b.limit } for b in budgets])
+def get_user_data(query, user_id=None, is_family_head=False):
+    if is_family_head:
+        return query.all()
+    else:
+        return query.filter_by(user_id=user_id).all()
 
-    # Generate and save the graph
-    graph_path = os.path.join(GRAPH_DIR, 'budget_graph.png')
-    plt.figure(figsize=(10, 6))
-    plt.plot(df['category_id'], df['limit'], marker='o', color='blue', label='Budget Limit')
-    plt.title('Budget Graph')
-    plt.xlabel('Category ID')
-    plt.ylabel('Budget Limit')
-    plt.legend()
-    plt.grid()
-    plt.savefig(graph_path)
-    plt.close()
+def fetch_budgets():
+    user_id = flask_session.get('user_id')  # Retrieving user_id from session
+    budgets = Budget.query.filter_by(user_id=user_id).all()
+    data = [
+        {
+            'budget_id': b.budget_id,
+            'category_id': b.category_id,
+            'user_id': b.user_id,
+            'limit': float(b.limit),
+            'start_date': b.start_date,
+            'end_date': b.end_date,
+        }
+        for b in budgets
+    ]
+    return pd.DataFrame(data)
 
-    # Generate and save the CSV
-    csv_path = os.path.join(DOWNLOAD_DIR, 'budget_data.csv')
-    df.to_csv(csv_path, index=False)
+def fetch_expenses(start_date=None, end_date=None, category=None):
+    user_id = flask_session.get('user_id')
+    query = Expense.query.filter_by(UserID=user_id)
 
-    return render_template('indexreport.html', graph_url=url_for('static', filename='images/budget_graph.png'), csv_url=url_for('static', filename='downloads/budget_data.csv'))
+    if start_date:
+        query = query.filter(Expense.expensedate >= start_date)
+    if end_date:
+        query = query.filter(Expense.expensedate <= end_date)
+    if category:
+        query = query.filter(Expense.categoryid == category)
+    
+    expenses = query.all()
+    data = [
+        {
+            'ExpenseID': e.ExpenseID,
+            'UserID': e.UserID,
+            'categoryid': e.categoryid,
+            'amount': e.amount,
+            'expensedate': e.expensedate,
+            'expensedesc': e.expensedesc,
+            'receiptpath': e.receiptpath,
+            'expensetime': e.expensetime
+        }
+        for e in expenses
+    ]
+    return pd.DataFrame(data)
 
-# Route for expenses visualization
-@app.route('/expenses')
-def expenses_visualization():
-    # Query expense data
-    expenses = expenses.query.all()
-    df = pd.DataFrame([{ 'categoryid': e.categoryid, 'amount': e.amount } for e in expenses])
+def fetch_savings_goals():
+    user_id=flask_session.get('user_id')
+    goals = SavingsGoal.query.filter_by(User_id=user_id).all()
+    data = [
+        {
+            'Goal_id': g.Goal_id,
+            'Target_amount': g.Target_amount,
+            'start_date': g.start_date,
+            'end_date': g.end_date,
+            'Goal_status': g.Goal_status,
+            'Goal_description': g.Goal_description,
+            'Achieved_amount': g.Achieved_amount,
+            'Goal_type': g.Goal_type,
+            'User_id': g.User_id,
+            'family_head_id': g.family_head_id
+        }
+        for g in goals
+    ]
+    return pd.DataFrame(data)
 
-    # Generate and save the graph
-    graph_path = os.path.join(GRAPH_DIR, 'expenses_graph.png')
-    plt.figure(figsize=(10, 6))
-    plt.plot(df['categoryid'], df['amount'], marker='o', color='blue', label='Expense Limit')
-    plt.title('Expenses Graph')
-    plt.xlabel('Category ID')
-    plt.ylabel('Amount')
-    plt.legend()
-    plt.grid()
-    plt.savefig(graph_path)
-    plt.close()
+@app.route('/budget')
+def budget():
+    # Get the user role and user ID from the session
+    role = flask_session.get('role')
+    user_id = flask_session.get('user_id')
+    
+    # Fetch budget data
+    budgets = fetch_budgets()
+    filtered_budgets=''
 
-    # Generate and save the CSV
-    csv_path = os.path.join(DOWNLOAD_DIR, 'expense_data.csv')
-    df.to_csv(csv_path, index=False)
+    if role == 'FamilyHead':
+        # If the user is a FamilyHead, show all data
+        filtered_budgets = budgets
+    else:
+        # If the user is a regular user, show only their personal data
+        filtered_budgets = budgets[budgets['user_id'] == user_id]
+        print(filtered_budgets)
 
-    return render_template('indexreport.html', graph_url=url_for('static', filename='images/expenses_graph.png'), csv_url=url_for('static', filename='downloads/expense_data.csv'))
+    categories = filtered_budgets['category_id'].unique()
+    return render_template('trail2.html', categories=categories, budgets=filtered_budgets)
+
+
+@app.route('/savings')
+def savings():
+    # Get the user role and user ID from the session
+    role = flask_session.get('role')
+    user_id = flask_session.get('user_id')
+
+    # Fetch savings goal data
+    savings_goals = fetch_savings_goals()
+
+    if role == 'FamilyHead':
+        # If the user is a FamilyHead, show all data
+        filtered_savings = savings_goals
+    else:
+        # If the user is a regular user, show only their personal data
+        filtered_savings = savings_goals[savings_goals['User_id'] == user_id]
+
+    statuses = filtered_savings['Goal_status'].unique()
+    return render_template('trial2save.html', statuses=statuses, savings_goals=filtered_savings)
+
+@app.route('/filter_expenses', methods=['POST'])
+def filter_expenses():
+    filters = request.json
+    start_date = filters.get('start_date')
+    end_date = filters.get('end_date')
+    category = filters.get('category')
+
+    df = fetch_expenses(start_date=start_date, end_date=end_date, category=category)
+    return jsonify(df.to_dict(orient='records'))
+
+@app.route('/export_expenses_csv', methods=['POST'])
+def export_expenses_csv():
+    filters = request.json
+    start_date = filters.get('start_date')
+    end_date = filters.get('end_date')
+    category = filters.get('category')
+
+    df = fetch_expenses(start_date=start_date, end_date=end_date, category=category)
+    file_path = 'data/filtered_expenses.csv'
+    os.makedirs('data', exist_ok=True)
+    df.to_csv(file_path, index=False)
+
+    return send_file(file_path, as_attachment=True)
+
+
+@app.route('/expense')
+def expense():
+    # Get the user role and user ID from the session
+    role = flask_session.get('role')
+    user_id = flask_session.get('user_id')
+
+    # Fetch expense data
+    expenses = fetch_expenses()
+
+    if role == 'FamilyHead':
+        # If the user is a FamilyHead, show all data
+        filtered_expenses = expenses
+    else:
+        # If the user is a regular user, show only their personal data
+        filtered_expenses = expenses[expenses['UserID'] == user_id]
+
+    categories = filtered_expenses['categoryid'].unique()
+    return render_template('expenses.html', categories=categories, expenses=filtered_expenses)
+
+# Route to generate and send plots
+@app.route('/generate_plot', methods=['POST'])
+def generate_plot():
+    plot_type = request.json['plot_type']
+    
+    role = flask_session.get('role')
+    user_id = flask_session.get('user_id')
+    
+    # Fetch budget data
+    budgets = fetch_budgets()
+    df=''
+
+    if role == 'FamilyHead':
+        # If the user is a FamilyHead, show all data
+        df = budgets
+    else:
+        # If the user is a regular user, show only their personal data
+        df = budgets[budgets['user_id'] == user_id]
+        
+
+    # Pie Chart: Budget distribution by category
+    if plot_type == 'pie':
+        category_sums = df.groupby('category_id')['limit'].sum()
+        plt.figure(figsize=(8, 6))
+        category_sums.plot.pie(autopct='%1.1f%%', startangle=90, cmap='tab20', ylabel='')
+        plt.title('Budget Distribution by Category')
+    
+    # Bar Chart: Budget limit comparison by category
+    elif plot_type == 'bar':
+        category_sums = df.groupby('category_id')['limit'].sum()
+        plt.figure(figsize=(8, 6))
+        category_sums.plot.bar(color='skyblue', edgecolor='black')
+        plt.title('Budget Limit by Category')
+        plt.xlabel('Category ID')
+        plt.ylabel('Limit')
+
+    # Line Chart: Budget limits over time
+    elif plot_type == 'line':
+    # Ensure dates are parsed and sorted
+        df['start_date'] = pd.to_datetime(df['start_date'])
+        df.sort_values('start_date', inplace=True)
+
+
+
+    # Group by 'start_date' and 'category_id', summing 'limit'
+        grouped = df.groupby(['start_date', 'category_id'])['limit'].sum().reset_index()
+
+    # Plot each category's data
+        plt.figure(figsize=(10, 6))
+        for category in grouped['category_id'].unique():
+            category_data = grouped[grouped['category_id'] == category]
+            plt.plot(
+                category_data['start_date'], 
+                category_data['limit'], 
+                marker='o', 
+                label=f'Category {category}'
+            )
+
+        plt.title('Budget Limits Over Time')
+        plt.xlabel('Start Date')
+        plt.ylabel('Limit')
+        plt.legend()
+        plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+
+    # Save plot to a BytesIO object
+    img = io.BytesIO()
+    plt.savefig(img, format='png')
+    img.seek(0)
+    return send_file(img, mimetype='image/png')
+
+@app.route('/consolidated')
+def download_consolidated():
+    # Fetch data
+    budget_df = fetch_budgets()
+    expense_df = fetch_expenses()
+    savings_df = fetch_savings_goals()
+
+    # File path for consolidated CSV
+    file_path = 'data/consolidated_report.csv'
+    os.makedirs('data', exist_ok=True)
+
+    with open(file_path, 'w', newline='') as f:
+        f.write("Budgets\n")
+        budget_df.to_csv(f, index=False)
+        f.write("\n")  
+
+        f.write("Expenses\n")
+        expense_df.to_csv(f, index=False)
+        f.write("\n")  
+
+        f.write("Savings Goals\n")
+        savings_df.to_csv(f, index=False)
+        f.write("\n")
+
+    return send_file(file_path, as_attachment=True)
+
+# Route to download CSV
+@app.route('/download_csv')
+def download_csv():
+    df = fetch_budgets()
+    file_path = 'data/budgets.csv'
+    os.makedirs('data', exist_ok=True)
+    df.to_csv(file_path, index=False)
+    return send_file(file_path, as_attachment=True)
+
+
+# Route to generate and send plots
+@app.route('/generate_expense_plot', methods=['POST'])
+def generate_expense_plot():
+    plot_type = request.json['plot_type']
+    
+
+    role = flask_session.get('role')
+    user_id = flask_session.get('user_id')
+    print("Expenses User id",user_id)
+    # Fetch expense data
+    expenses = fetch_expenses()
+    df=''
+
+    if role == 'FamilyHead':
+        # If the user is a FamilyHead, show all data
+        df = expenses
+    else:
+        # If the user is a regular user, show only their personal data
+        df = expenses[expenses['UserID'] == user_id]
+
+    # Pie Chart: Expense distribution by category
+    if plot_type == 'pie':
+        category_sums = df.groupby('categoryid')['amount'].sum()
+        plt.figure(figsize=(8, 6))
+        category_sums.plot.pie(autopct='%1.1f%%', startangle=90, cmap='tab20', ylabel='')
+        plt.title('Expense Distribution by Category')
+    
+    # Bar Chart: Expense amounts by category
+    elif plot_type == 'bar':
+        category_sums = df.groupby('categoryid')['amount'].sum()
+        plt.figure(figsize=(8, 6))
+        category_sums.plot.bar(color='lightcoral', edgecolor='black')
+        plt.title('Expense Amounts by Category')
+        plt.xlabel('Category ID')
+        plt.ylabel('Amount')
+
+    # Line Chart: Expense trends over time
+    elif plot_type == 'line':
+        df['expensedate'] = pd.to_datetime(df['expensedate'])
+        df.sort_values('expensedate', inplace=True)
+
+        grouped = df.groupby(['expensedate', 'categoryid'])['amount'].sum().reset_index()
+
+        plt.figure(figsize=(10, 6))
+        for category in grouped['categoryid'].unique():
+            category_data = grouped[grouped['categoryid'] == category]
+            plt.plot(
+                category_data['expensedate'], 
+                category_data['amount'], 
+                marker='o', 
+                label=f'Category {category}'
+            )
+
+        plt.title('Expense Trends Over Time')
+        plt.xlabel('Expense Date')
+        plt.ylabel('Amount')
+        plt.legend()
+        plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+
+    # Save plot to a BytesIO object
+    img = io.BytesIO()
+    plt.savefig(img, format='png')
+    img.seek(0)
+    return send_file(img, mimetype='image/png')
+
+# Route to download CSV
+@app.route('/download_expenses_csv')
+def download_expenses_csv():
+    df = fetch_expenses()
+    file_path = 'data/expenses.csv'
+    os.makedirs('data', exist_ok=True)
+    df.to_csv(file_path, index=False)
+    return send_file(file_path, as_attachment=True)
+
+
+
+
+# Route to generate and send plots
+@app.route('/generate_savings_plot', methods=['POST'])
+def generate_savings_plot():
+    plot_type = request.json['plot_type']
+    df = fetch_savings_goals()
+
+    # Pie Chart: Distribution of goals by status
+    if plot_type == 'pie':
+        status_counts = df['Goal_status'].value_counts()
+        plt.figure(figsize=(8, 6))
+        status_counts.plot.pie(autopct='%1.1f%%', startangle=90, cmap='tab20', ylabel='')
+        plt.title('Distribution of Goals by Status')
+
+    # Bar Chart: Target vs. Achieved amounts
+    elif plot_type == 'bar':
+        plt.figure(figsize=(10, 6))
+        df.set_index('Goal_id')[['Target_amount', 'Achieved_amount']].plot.bar(color=['steelblue', 'coral'], edgecolor='black')
+        plt.title('Target vs. Achieved Amounts for Each Goal')
+        plt.xlabel('Goal ID')
+        plt.ylabel('Amount')
+        plt.legend(['Target Amount', 'Achieved Amount'])
+
+    # Line Chart: Cumulative achieved amounts over time
+    elif plot_type == 'line':
+        df['start_date'] = pd.to_datetime(df['start_date'])
+        df.sort_values('start_date', inplace=True)
+        df['Cumulative_Achieved'] = df['Achieved_amount'].cumsum()
+
+        plt.figure(figsize=(10, 6))
+        plt.plot(df['start_date'], df['Cumulative_Achieved'], marker='o', color='green')
+        plt.title('Cumulative Achieved Amount Over Time')
+        plt.xlabel('Start Date')
+        plt.ylabel('Cumulative Achieved Amount')
+        plt.grid(True, linestyle='--', linewidth=0.5)
+
+    img = io.BytesIO()
+    plt.savefig(img, format='png')
+    img.seek(0)
+    return send_file(img, mimetype='image/png')
+# Route to download CSV
+@app.route('/download_savings_csv')
+def download_savings_csv():
+    df = fetch_savings_goals()
+    file_path = 'data/savings_goals.csv'
+    os.makedirs('data', exist_ok=True)
+    df.to_csv(file_path, index=False)
+    return send_file(file_path, as_attachment=True)
 
 
 if __name__ == '__main__':
