@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, session, url_for, redirect, flash
+from flask import Flask, request, render_template, session as flask_session, url_for, redirect, flash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import text
@@ -62,6 +62,17 @@ users = Table(
     Column('role', String(50), nullable=False),
     Column('created_at', TIMESTAMP, nullable=False, server_default=func.now())
 )
+
+class Users(db.Model):
+    __tablename__ = 'users'
+    user_id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(255), nullable=False)
+    email = Column(String(255), unique=True, nullable=False)
+    password_hash = Column(String(255), nullable=False)
+    phone_number = Column(String(20), nullable=True)
+    role = Column(String(50), nullable=False)
+    created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())
+    
 expenses = Table(
     'expenses', metadata,
     Column('ExpenseID', Integer, primary_key=True, autoincrement=True),
@@ -73,6 +84,31 @@ expenses = Table(
     Column('receiptpath', String(500)),
     Column('expensetime', Time, nullable=False)
 )
+
+class Expense(db.Model):
+    __tablename__ = 'expenses'
+    ExpenseID = db.Column(db.Integer, primary_key=True)
+    UserID = db.Column(db.Integer, nullable=False)
+    categoryid = db.Column(db.String(50), nullable=False)
+    amount = db.Column(db.Integer, nullable=False)
+    expensedate = db.Column(db.Date, nullable=False)
+    expensedesc = db.Column(db.String(500))
+    receiptpath = db.Column(db.String(500))
+    expensetime = db.Column(db.Time, nullable=False)
+
+class SavingsGoal(db.Model):
+    __tablename__ = 'savings_goals'
+    Goal_id = db.Column(db.Integer, primary_key=True)
+    Target_amount = db.Column(db.Float, nullable=True)
+    start_date = db.Column(db.Date, nullable=True)
+    end_date = db.Column(db.Date, nullable=True)
+    Goal_status = db.Column(db.Enum('On-going', 'Completed', 'Cancelled'), default='On-going')
+    Goal_description = db.Column(db.Text, nullable=True)
+    Achieved_amount = db.Column(db.Float, nullable=True)
+    Goal_type = db.Column(db.Enum('Personal', 'Family'), default='Personal')
+    User_id = db.Column(db.String(100), nullable=True)
+    family_head_id = db.Column(db.String(100), nullable=True)
+
 metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 session = Session()
@@ -156,9 +192,14 @@ def login():
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
+        user = Users.query.filter_by(email=email).first()
+
         user_id = user_login(email, password)
+        user = Users.query.filter_by(email=email).first()
+
         if user_id:  # If user_id is returned, login is successful
-            #session['user_id'] = user_id  # Store user_id in session
+            flask_session['user_id'] =user.user_id  # Store user_id in session
+            flask_session['role']=user.role
             return redirect(url_for('navigationbar'))
         else:
             flash("Invalid email or password.", "danger")
