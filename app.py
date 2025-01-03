@@ -1,4 +1,5 @@
-from flask import Flask, request, render_template, session as flask_session, url_for, redirect, flash
+import io
+from flask import Flask, request, render_template, send_file, session as flask_session, url_for, redirect, flash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import text
@@ -19,11 +20,11 @@ app.config['UPLOAD_FOLDER'] = 'Recipt_uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # SQLAlchemy Setup
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost:3306/unified_family'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:1234@localhost:3306/unified_family'
 #change the password and databasename as per your system
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = secrets.token_hex(16)
-DATABASE_URI = 'mysql+pymysql://root:root@localhost/unified_family'
+DATABASE_URI = 'mysql+pymysql://root:1234@localhost/unified_family'
 engine = create_engine(DATABASE_URI)
 metadata = MetaData()
 
@@ -83,6 +84,13 @@ expenses = Table(
     Column('expensedesc', String(500)),
     Column('receiptpath', String(500)),
     Column('expensetime', Time, nullable=False)
+)
+
+categories=Table(
+    'categories',metadata,
+    Column('category_id',Integer,nullable=False,autoincrement=True),
+    Column('category_name',String(100),nullable=False),
+    Column('description',String(300),nullable=True)
 )
 
 class Expense(db.Model):
@@ -220,14 +228,44 @@ def verification():
 @app.route('/add_expenses', methods=['GET'])
 def form():
     """Render the expense form."""
-    return render_template('add_expenses.html')
+    with engine.connect() as conn:
+        result = conn.execute(select(categories)).fetchall()
+    print(result)
+    return render_template('add_expenses.html',categories=result)
 
 @app.route('/show_expenses', methods=['GET'])
 def show_expenses():
     """Display all expenses."""
+    selected_month = request.args.get('month')  # Get selected month from query params
+    selected_category = request.args.get('category')
     with engine.connect() as conn:
-        result = conn.execute(select(expenses)).fetchall()
-    return render_template('show_expenses.html', expenses=result)
+        categories_result = conn.execute(select(categories.c.category_id, categories.c.category_name)).fetchall()
+        # Base query to fetch all expenses
+        query = select(
+            expenses.c.ExpenseID,
+            expenses.c.UserID,
+            expenses.c.categoryid,
+            expenses.c.amount,
+            expenses.c.expensedate,
+            expenses.c.expensedesc,
+            expenses.c.receiptpath,
+            expenses.c.expensetime,
+            categories.c.category_name  # Select category name
+        ).select_from(expenses.join(categories, expenses.c.categoryid == categories.c.category_id))
+
+        # Apply month filter if selected
+        if selected_month:
+            query = query.where(expenses.c.expensedate.like(f"{selected_month}-%"))
+        if selected_category:
+            query = query.where(categories.c.category_name == selected_category)
+
+        result = conn.execute(query).fetchall()
+        
+        # Fetch distinct months for dropdown
+        months_query = conn.execute(select(expenses.c.expensedate.distinct())).fetchall()
+        months = sorted(set(expensedate.strftime('%Y-%m') for expensedate, in months_query))
+
+    return render_template('show_expenses.html', expenses=result, months=months, selected_month=selected_month, selected_category=selected_category, categories=categories_result)
 
 @app.route('/submit', methods=['POST'])
 def submit():
@@ -238,7 +276,7 @@ def submit():
         amount = int(request.form.get('amount'))
         date = request.form.get('date')
         time = request.form.get('time')
-
+        print(category,amount,date,time)
         # Validate that we got all required fields
         if not category or not amount or not date or not time:
             return "<h1>Error: Missing required fields!</h1>", 400
@@ -263,45 +301,117 @@ def submit():
 
         # Insert data into the database
         insert_expense(category, amount, date, description, receipt_path, time)
+        # flash('New expense added successfully','info')
 
         # Redirect to the expenses page
-        return redirect(url_for('show_expenses'))
+        return redirect(url_for('index'))
 
     except Exception as e:
         return f"<h1>Error: {str(e)}</h1>", 500
 
-@app.route('/savings_goals', methods=['GET', 'POST'])
-def savings_goals():
-    user_id = flask_session.get('user_id')
-    family_head_id = flask_session.get('family_head_id')
+@app.route('/edit_expenses/<int:ExpenseID>',methods=['GET','POST'])
+def edit(ExpenseID):
+    with engine.connect() as conn:
+        updating_expense = conn.execute(select(expenses).where(expenses.c.ExpenseID==ExpenseID)).fetchone()
+        category = conn.execute(select(categories)).fetchall()
+    #print(updating_expense)
+    #print(categories)
+        if request.method == 'POST':
+            try:
+                # Get updated data from the form
+                cat = request.form.get('category')
+                amount = int(request.form.get('amount'))
+                date = request.form.get('date')
+                time = request.form.get('time')
+                print(cat,amount,date,time)
+                # Validate the data
+                if not cat or not amount or not date or not time:
+                    flash("Error: Missing required fields!", 'danger')
+                    return redirect(request.url)
 
-    if not user_id or not family_head_id:
-        flash("User not logged in or family information unavailable.")
-        return redirect(url_for('login'))
+                # Validate the date and time
+                submitted_datetime = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
+                current_datetime = datetime.now()
+                if submitted_datetime > current_datetime:
+                    flash("Error: Date and time cannot be in the future!", 'danger')
+                    return redirect(request.url)
 
-    # Update expired goals
-    sql_update = text("""
-        UPDATE Savings_goals
-        SET Goal_status = 'Not Achieved'
-        WHERE End_date < CURRENT_DATE
-          AND Goal_status NOT IN ('Achieved', 'Cancelled');
-    """)
-    db.session.execute(sql_update)
-    db.session.commit()
+                # Optional fields
+                description = request.form.get('description', 'No description provided')
+                receipt = request.files.get('receipt')
 
-    # Filters and search
-    status_filter = request.args.get('status', 'all')
-    search_query = request.form.get('search_query', '').strip()
+                # Save the uploaded file if provided
+                receipt_path = None
+                if receipt and receipt.filename:
+                    receipt_path = os.path.join(app.config['UPLOAD_FOLDER'], receipt.filename)
+                    receipt.save(receipt_path)
+                else:
+                    receipt_path = 'No file uploaded'
+                # Update the expense in the database
+                conn.execute(
+                    expenses.update()
+                    .where(expenses.c.ExpenseID == ExpenseID)
+                    .values(
+                        categoryid=cat,
+                        amount=amount,
+                        expensedate=date,
+                        expensetime=time,
+                        expensedesc=description,
+                        receiptpath=receipt_path,
+                    )
+                )
+                conn.commit()
 
-    # Build query dynamically
-    base_query = """
-        SELECT * 
-        FROM Savings_goals
+                # flash("Expense updated successfully!", 'success')
+                return redirect(url_for('index'))
+
+            except Exception as e:
+                flash(f"Error updating expense: {str(e)}", 'danger')
+                return redirect(request.url)
+        # Render the edit form with current expense data and category list
+    return render_template('edit_expenses.html',expense=updating_expense,categories=category)
+
+@app.route('/add_amount_to_expenses', methods=['POST'])
+def add_amount_to_expenses():
+    """Handle adding amount to an expense."""
+    try:
+        data = request.get_json()
+        ExpenseID = data['ExpenseID']
+        added_amount = float(data['addedAmount'])
+
+        with engine.connect() as conn:
+            # Fetch current amount
+            current_expense = conn.execute(select(expenses).where(expenses.c.ExpenseID == ExpenseID)).fetchone()
+            if not current_expense:
+                return {"error": "Expense not found"}, 404
+
+            new_amount = current_expense.amount + added_amount
+
+            # Update the amount
+            conn.execute(
+                expenses.update()
+                .where(expenses.c.ExpenseID == ExpenseID)
+                .values(amount=new_amount)
+            )
+            conn.commit()
+
+        return {"message": "Amount added successfully!"}, 200
+    except Exception as e:
+        return {"error": str(e)}, 500
+    
+@app.route('/saving_goals')
+def saving_goals():
+    #Hardcoded to 1 because session management is not done yet
+    user_id = 1 #session.get('user_id')
+    family_head_id = 1 #session.get('family_head_id')
+
+    sql = text("""
+        SELECT * FROM savings_goals
         WHERE 
             ((Goal_type = 'Personal' AND User_id = :user_id)
             OR
-            (Goal_type = 'Family' AND Family_head_id = :family_head_id))
-    """
+            (Goal_type = 'Family' AND Family_head_id = :family_head_id)
+    """)
 
     if status_filter != 'all':
         base_query += " AND Goal_status = :status_filter"
