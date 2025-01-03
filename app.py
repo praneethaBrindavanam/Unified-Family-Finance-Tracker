@@ -19,11 +19,11 @@ app.config['UPLOAD_FOLDER'] = 'Recipt_uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # SQLAlchemy Setup
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:Hemaramachandran6010@localhost:3306/dummy'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost:3306/unified_family'
 #change the password and databasename as per your system
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = secrets.token_hex(16)
-DATABASE_URI = 'mysql+pymysql://root:Hemaramachandran6010@localhost/dummy'
+DATABASE_URI = 'mysql+pymysql://root:root@localhost/unified_family'
 engine = create_engine(DATABASE_URI)
 metadata = MetaData()
 
@@ -117,7 +117,7 @@ def insert_expense(category, amount, expense_date, description, receipt_path, ex
     """Insert a new expense into the database."""
     with engine.connect() as conn:
         conn.execute(expenses.insert().values(
-            UserID=1001,  # Hardcoded for demonstration
+            UserID=2,  # Hardcoded for demonstration
             categoryid=category,
             amount=amount,
             expensedate=expense_date,
@@ -158,7 +158,7 @@ def user_login(email, password):
     return False    
 
 
-@app.route('/')
+@app.route('/home.html')
 def home():
     return render_template('home.html')
 
@@ -272,8 +272,8 @@ def submit():
 
 @app.route('/savings_goals', methods=['GET', 'POST'])
 def savings_goals():
-    user_id = session.get('user_id')
-    family_head_id = session.get('family_head_id')
+    user_id = flask_session.get('user_id')
+    family_head_id = flask_session.get('family_head_id')
 
     if not user_id or not family_head_id:
         flash("User not logged in or family information unavailable.")
