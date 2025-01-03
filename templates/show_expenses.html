@@ -6,7 +6,7 @@
     <title>Expenses</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        nav{
+        nav {
             padding: 30px;
         }
         nav ul {
@@ -20,34 +20,75 @@
             margin-right: 2.5rem;
             color: #fff;
         }
-        nav li a{
+        nav li a {
             text-decoration: none;
             color: #fff;
         }
-        nav li a .active{
+        nav li a .active {
             color: #92a1c2;
         }
-        nav li a:hover{
+        nav li a:hover {
             color: #bd6c73;
         }
-        body{
+        body {
             background-color: #6b597f;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .table th, .table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .table th {
+            background-color: #2e365a;
         }
     </style>
 </head>
 <body>
-    <!--
-    <nav style="background-color: #2e365a;"><ul>
-        <li><a href="">Home</a></li>
-        <li><a href="/expenses" class="active">Expenses</a></li>
-        <li><a href="">Budget</a></li>
-        <li><a href="">Goals</a></li></ul>
+    <nav style="background-color: #2e365a;">
+        <ul>
+            <li><a href="">Home</a></li>
+            <li><a href="/show_expenses" class="active">Expenses</a></li>
+            <li><a href="">Budget</a></li>
+            <li><a href="">Goals</a></li>
+        </ul>
     </nav>
-    -->
     <div class="container mt-5">
         <h2 class="text-center" style="color: #fff;">Expenses</h2>
-        <div class="text-center mb-3" >
+        <div class="text-center mb-3">
             <a href="/add_expenses" class="btn btn-primary" style="background-color: #bd6c73;">Add New Expense</a>
+        </div>
+        <div class="header">
+            <form method="get" action="/" style="margin: 0;">
+                <label for="month" style="color: #ffffff;">Select Month:</label>
+                <select id="month" name="month" onchange="this.form.submit()">
+                    <option value="">All</option>
+                    {% for month in months %}
+                        <option value="{{ month }}" {% if selected_month == month %}selected{% endif %}>
+                            {{ month }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </form>
+            <form method="GET" action="{{ url_for('show_expenses') }}">
+                <label for="category" style="color: #ffffff;">Filter by Category</label>
+                <select name="category" id="category">
+                    <option value="">All</option>
+                    {% for category in categories %}
+                        <option value="{{ category[1] }}" {% if category[1] == selected_category %}selected{% endif %}>{{ category[1] }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit">Filter</button>
+            </form>
         </div>
         <table class="table table-bordered table-striped" style="background-color: #a2869c;">
             <thead class="table-dark" style="background-color: #a2869c; color: #ffffff;">
@@ -59,28 +100,103 @@
                     <th>Date</th>
                     <th>Time</th>
                     <th>Receipt</th>
+                    <th>Edit</th>
+                    <th>Add Amount</th>
                 </tr>
             </thead>
             <tbody>
                 {% for expense in expenses %}
                 <tr style="background-color: #d1b1c6;">
                     <td>{{ expense.ExpenseID }}</td>
-                    <td>{{ expense.categoryid }}</td>
+                    <td>{{ expense.category_name }}</td>
                     <td>{{ expense.amount }}</td>
                     <td>{{ expense.expensedesc }}</td>
                     <td>{{ expense.expensedate }}</td>
                     <td>{{ expense.expensetime }}</td>
                     <td>{{ expense.receiptpath }}</td>
+                    <td>
+                        <a href="/edit_expenses/{{ expense.ExpenseID }}" class="btn btn-warning">Edit</a>
+                    </td>
+                    <td>
+                        <button class="btn btn-primary btn-sm add-amount-btn" 
+                                data-id="{{ expense.ExpenseID }}" 
+                                data-amount="{{ expense.amount }}" 
+                                style="background-color: #bd6c73;">
+                            Add Amount
+                        </button>
+                    </td>
                 </tr>
                 {% endfor %}
                 {% if not expenses %}
                 <tr>
-                    <td colspan="7" class="text-center" style="background-color: #d1b1c6; color: #000000;">No expenses to display</td>
+                    <td colspan="9" class="text-center" style="background-color: #d1b1c6; color: #000000;">No expenses to display</td>
                 </tr>
                 {% endif %}
             </tbody>
         </table>
-        
     </div>
+
+    <!-- Add Amount Modal -->
+    <div class="modal fade" id="addAmountModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Amount</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addAmountForm">
+                        <input type="hidden" id="expenseId" name="expenseId">
+                        <div class="mb-3">
+                            <label for="currentAmount" class="form-label">Current Amount</label>
+                            <input type="text" id="currentAmount" class="form-control" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="addedAmount" class="form-label">Amount to Add</label>
+                            <input type="number" id="addedAmount" name="addedAmount" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-success">Submit</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Show modal on button click
+            $(".add-amount-btn").click(function () {
+                const expenseId = $(this).data("id");
+                const currentAmount = $(this).data("amount");
+
+                $("#expenseId").val(expenseId);
+                $("#currentAmount").val(currentAmount);
+                $("#addAmountModal").modal("show");
+            });
+
+            // Handle form submission
+            $("#addAmountForm").submit(function (e) {
+                e.preventDefault();
+                const expenseId = $("#expenseId").val();
+                const addedAmount = $("#addedAmount").val();
+
+                $.ajax({
+                    url: "/add_amount_to_expenses",
+                    type: "POST",
+                    data: JSON.stringify({ ExpenseID: expenseId, addedAmount: addedAmount }),
+                    contentType: "application/json",
+                    success: function (response) {
+                        alert("Amount added successfully!");
+                        location.reload();
+                    },
+                    error: function (xhr, status, error) {
+                        alert("Error: " + xhr.responseText);
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>
