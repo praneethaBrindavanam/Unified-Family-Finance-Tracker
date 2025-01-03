@@ -72,14 +72,62 @@
       }
   </style>
   </head>
-  <body>
-    <h1>SAVINGS GOALS AND MANAGEMENT</h1>
-    <h3>
-      {% with messages = get_flashed_messages() %} {% if messages %} {% for
-      message in messages %} {{messages}} {% endfor %} {% endif %} {% endwith %}
-    </h3>
-    <p><a href="{{url_for('add_Goal')}}">Add Goals</a></p>
-    <table>
+  <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Savings Goals</title>
+  <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+  />
+</head>
+<body>
+  <h1>SAVINGS GOALS AND MANAGEMENT</h1>
+  
+  <!-- Flash Messages -->
+  <h3>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      {% for message in messages %}
+        {{ message }}
+      {% endfor %}
+    {% endif %}
+    {% endwith %}
+  </h3>
+
+  <!-- Add Goals -->
+  <p><a href="{{ url_for('add_Goal') }}">Add Goals</a></p>
+
+  <!-- Search Bar -->
+  <form method="POST" action="{{ url_for('savings_goals') }}">
+    <label for="search-bar">Search Goals:</label>
+    <input
+      type="text"
+      id="search-bar"
+      name="search_query"
+      value="{{ search_query }}"
+      placeholder="Type goal description"
+    />
+    <button type="submit">Search</button>
+  </form>
+
+  <!-- Status Filter -->
+  <form method="GET" action="{{ url_for('savings_goals') }}">
+    <label for="status-filter">Filter Goals:</label>
+    <select id="status-filter" name="status" onchange="this.form.submit()">
+      <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All</option>
+      <option value="Active" {% if status_filter == 'Active' %}selected{% endif %}>Active</option>
+      <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
+      <option value="Achieved" {% if status_filter == 'Achieved' %}selected{% endif %}>Achieved</option>
+      <option value="Not Achieved" {% if status_filter == 'Not Achieved' %}selected{% endif %}>Not Achieved</option>
+    </select>
+  </form>
+
+  <!-- Goals Table -->
+  <table>
+    <thead>
       <tr>
         <th>Goal Id</th>
         <th>Goal Description</th>
@@ -92,30 +140,51 @@
         <th>Edit</th>
         <th>Delete</th>
         <th>Add Amount</th>
+        <th>Restart</th> <!-- Restart column -->
       </tr>
+    </thead>
+    <tbody>
       {% for data in datas %}
       <tr>
-        <td>{{data.Goal_id}}</td>
-        <td>{{data.Goal_description}}</td>
-        <td>{{data.Target_amount}}</td>
-        <td>{{data.Achieved_amount}}</td>
-        <td>{{data.Goal_status}}</td>
-        <td>{{data.start_date}}</td>
-        <td>{{data.end_date}}</td>
-        <td>{{data.Goal_type}}</td>
-
-        <td><a href="{{url_for('edit_Goals', id=data.Goal_id)}}">EDIT</a></td>
+        <td>{{ data.Goal_id }}</td>
+        <td>{{ data.Goal_description }}</td>
+        <td>{{ data.Target_amount }}</td>
+        <td>{{ data.Achieved_amount }}</td>
+        <td>{{ data.Goal_status }}</td>
+        <td>{{ data.start_date }}</td>
+        <td>{{ data.end_date }}</td>
+        <td>{{ data.Goal_type }}</td>
+        <td><a href="{{ url_for('edit_Goals', id=data.Goal_id) }}">EDIT</a></td>
         <td>
           <a
-            onclick="return confirm('Are you sure to delete ');"
-            ,
-            href="{{url_for('delete_Goals' , id=data.Goal_id)}}"
+            onclick="return confirm('Are you sure to delete?');"
+            href="{{ url_for('delete_Goals', id=data.Goal_id) }}"
             >DELETE</a
           >
         </td>
-        <td> <a href="{{url_for('add_amount' , id = data.Goal_id)}}">ADD AMOUNT</a> </td>
+        <td><a href="{{ url_for('add_amount', id=data.Goal_id) }}">ADD_AMOUNT</a></td>
+        <td>
+          <form 
+            action="{{ url_for('restart_goal', goal_id=data.Goal_id) }}" 
+            method="POST" 
+            onsubmit="return confirm('Are you sure you want to restart this goal?');" 
+            style="display: inline;"
+          >
+            <button 
+              type="submit" 
+              style="background: #0984e3; color: white; padding: 10px 15px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer;"
+            >
+              RESTART
+            </button>
+          </form>
+        </td>
+        <td>
+          <a href="{{url_for('progress_bar', id=data.goal_id)}}">SHOW PROGRESS</a>
+        </td>
       </tr>
       {% endfor %}
-    </table>
-  </body>
+    </tbody>
+  </table>
+</body>
+</html>
 </html>
