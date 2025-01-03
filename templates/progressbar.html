@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Progress Bar</title>
+    <link rel="stylesheet" href="{{url_for('static', filename='style.css')}}">
+  </head>
+  <body>
+    <h1>Progress for Goal: {{ goal.Goal_description }}</h1>
+    <div class="progress-container">
+        <div 
+            class="progress-bar" 
+            style="width: {{ progress_percentage }}%;"
+        >
+            {{ progress_percentage }}%
+        </div>
+    </div>
+    <p class="progress-label">
+        Achieved: ₹{{ goal.Achieved_amount  }} / Target: ₹{{ goal.Target_amount }}
+    </p>
+  </body>
+</html>
