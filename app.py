@@ -7,6 +7,8 @@ import secrets
 import enum
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+from datetime import timedelta
+
 from flask import jsonify,request
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, Date, Time, TIMESTAMP,func 
 from sqlalchemy.sql import select
@@ -399,19 +401,38 @@ def add_amount_to_expenses():
     except Exception as e:
         return {"error": str(e)}, 500
     
-@app.route('/saving_goals')
-def saving_goals():
-    #Hardcoded to 1 because session management is not done yet
-    user_id = 1 #session.get('user_id')
-    family_head_id = 1 #session.get('family_head_id')
+@app.route('/savings_goals', methods=['GET', 'POST'])
+def savings_goals():
+    user_id = session.get('user_id')
+    family_head_id = session.get('family_head_id')
 
-    sql = text("""
-        SELECT * FROM savings_goals
+    if not user_id or not family_head_id:
+        flash("User not logged in or family information unavailable.")
+        return redirect(url_for('login'))
+
+    # Update expired goals
+    sql_update = text("""
+        UPDATE Savings_goals
+        SET Goal_status = 'Not Achieved'
+        WHERE End_date < CURRENT_DATE
+          AND Goal_status NOT IN ('Achieved', 'Cancelled');
+    """)
+    db.session.execute(sql_update)
+    db.session.commit()
+
+    # Filters and search
+    status_filter = request.args.get('status', 'all')
+    search_query = request.form.get('search_query', '').strip()
+
+    # Build query dynamically
+    base_query = """
+        SELECT * 
+        FROM Savings_goals
         WHERE 
             ((Goal_type = 'Personal' AND User_id = :user_id)
             OR
-            (Goal_type = 'Family' AND Family_head_id = :family_head_id)
-    """)
+            (Goal_type = 'Family' AND Family_head_id = :family_head_id))
+    """
 
     if status_filter != 'all':
         base_query += " AND Goal_status = :status_filter"
@@ -431,7 +452,7 @@ def saving_goals():
     savings_goals = db.session.execute(sql, {k: v for k, v in query_params.items() if v is not None}).fetchall()
 
     return render_template(
-        "home.html",
+        "saving_goal.html",
         datas=savings_goals,
         status_filter=status_filter,
         search_query=search_query
