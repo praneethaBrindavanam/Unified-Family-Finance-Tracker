@@ -22,11 +22,11 @@ app.config['UPLOAD_FOLDER'] = 'Recipt_uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # SQLAlchemy Setup
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:1234@localhost:3306/unified_family'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost:3306/unified_family'
 #change the password and databasename as per your system
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = secrets.token_hex(16)
-DATABASE_URI = 'mysql+pymysql://root:1234@localhost/unified_family'
+DATABASE_URI = 'mysql+pymysql://root:root@localhost/unified_family'
 engine = create_engine(DATABASE_URI)
 metadata = MetaData()
 
@@ -405,6 +405,7 @@ def add_amount_to_expenses():
 def savings_goals():
     user_id = session.get('user_id')
     family_head_id = session.get('family_head_id')
+
 
     if not user_id or not family_head_id:
         flash("User not logged in or family information unavailable.")
