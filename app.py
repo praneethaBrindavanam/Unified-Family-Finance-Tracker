@@ -43,8 +43,8 @@ class Budget(db.Model):
     end_date=db.Column(db.Date)
 
 class AlertType(enum.Enum):
-    WARNING = 'Warning'
-    CRITICAL = 'Critical'
+    WARNING = 'WARNING'
+    CRITICAL = 'CRITICAL'
 
 class Alert(db.Model):
     __tablename__ = "alert"
@@ -742,13 +742,8 @@ def get_alerts():
     alerts=db.session.query(Alert)
     alert=[]
     for i in alerts:
-        alert.append([i.alert_id,i.alert_date,i.alert_message,i.alert_type,i.budget_id,i.is_resolved])
-    return jsonify({"alerts":alerts}),200
-
-
-
-
-
+        alert.append([i.alert_id,i.alert_date.strftime('%Y-%m-%d'),i.alert_message,i.alert_type.name,i.budget_id,i.is_resolved])
+    return jsonify({"alerts":alert}),200
 
 
 #MODULE 5 

@@ -21,3 +21,46 @@ function toggleDarkMode() {
   }
   
   window.onload = showSlides;
+
+async function displayAlerts(){
+  response=await fetch("http://127.0.0.1:5000/Alerts",{
+    method:"GET"
+  })
+  alerts=await response.json()
+  console.log(alerts["alerts"]);
+  const container=document.getElementById("alert-container")
+  for(alert of alerts["alerts"]){
+    const node=document.createElement("div")
+    node.innerHTML=`<div class="alert ${alert[3]=='WARNING'?'alert-primary':'alert-danger'}" role="alert">
+                      <div class="hstack gap-3">
+                      <div class="p-0">BudgetId-${alert[4]}</div>
+                      <div class="p-0">${alert[1]}</div>
+                      <div class="p-0">
+                        <a class="btn" data-bs-toggle="collapse" href="#${alert[0]}" role="button" aria-expanded="false" aria-controls="collapseExample">
+                        🔽
+                        </a>
+                      </div>
+                      </div>
+              <div class="collapse" id="${alert[0]}">
+                <div class="card card-body">
+                  <p>${alert[2]}</p>
+                </div>
+              </div>              
+          </div>`
+    container.appendChild(node);
+  }
+}
+
+async function getPercentage(){
+  response=await fetch('http://127.0.0.1:5000/BudgetPercentage',{
+    method:"GET"
+  })
+  const percentage=await response.json();
+  percentage=percentage["percent"];
+  const bar=document.getElementById("budgetpercentage");
+  bar.style.width=percentage+"%";
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+  getPercentage();
+});
