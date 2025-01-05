@@ -8,7 +8,7 @@ import enum
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from datetime import timedelta
-
+from flask import session
 from flask import jsonify,request
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, Date, Time, TIMESTAMP,func 
 from sqlalchemy.sql import select
@@ -22,11 +22,11 @@ app.config['UPLOAD_FOLDER'] = 'Recipt_uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # SQLAlchemy Setup
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:1234@localhost:3306/unified_family'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:Hemaramachandran6010@localhost:3306/dummy'
 #change the password and databasename as per your system
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = secrets.token_hex(16)
-DATABASE_URI = 'mysql+pymysql://root:1234@localhost/unified_family'
+DATABASE_URI = 'mysql+pymysql://root:Hemaramachandran6010@localhost:3306/dummy'
 engine = create_engine(DATABASE_URI)
 metadata = MetaData()
 
@@ -43,8 +43,8 @@ class Budget(db.Model):
     end_date=db.Column(db.Date)
 
 class AlertType(enum.Enum):
-    WARNING = 'Warning'
-    CRITICAL = 'Critical'
+    WARNING = 'WARNING'
+    CRITICAL = 'CRITICAL'
 
 class Alert(db.Model):
     __tablename__ = "alert"
@@ -167,7 +167,7 @@ def user_login(email, password):
         return result.user_id
     return False    
 
-
+@app.route('/')
 @app.route('/home.html')
 def home():
     return render_template('home.html')
@@ -403,14 +403,23 @@ def add_amount_to_expenses():
     
 @app.route('/savings_goals', methods=['GET', 'POST'])
 def savings_goals():
-    user_id = session.get('user_id')
+    from flask import session  
+    if not session.get('user_id') or not session.get('family_head_id'):
+        sql = text("SELECT User_id, family_head_id FROM user LIMIT 1")
+        user = db.session.execute(sql).fetchone()
+
+        if user:
+            session['user_id'] = user._mapping['User_id']
+            session['family_head_id'] = user._mapping['family_head_id']
+        else:
+            flash("No user found in the database.")
+            return redirect(url_for('login'))
+    user_id = session.get('user_id')  
     family_head_id = session.get('family_head_id')
 
     if not user_id or not family_head_id:
         flash("User not logged in or family information unavailable.")
         return redirect(url_for('login'))
-
-    # Update expired goals
     sql_update = text("""
         UPDATE Savings_goals
         SET Goal_status = 'Not Achieved'
@@ -420,11 +429,8 @@ def savings_goals():
     db.session.execute(sql_update)
     db.session.commit()
 
-    # Filters and search
     status_filter = request.args.get('status', 'all')
     search_query = request.form.get('search_query', '').strip()
-
-    # Build query dynamically
     base_query = """
         SELECT * 
         FROM Savings_goals
@@ -437,6 +443,7 @@ def savings_goals():
     if status_filter != 'all':
         base_query += " AND Goal_status = :status_filter"
 
+   
     if search_query:
         base_query += " AND Goal_description LIKE :search_query"
 
@@ -457,7 +464,7 @@ def savings_goals():
         status_filter=status_filter,
         search_query=search_query
     )
-
+    
 
 @app.route("/add_amount/<string:id>", methods=["GET", "POST"])
 def add_amount(id):
@@ -610,8 +617,6 @@ def restart_goal(goal_id):
     if not user_id or not family_head_id:
         flash("User not logged in or family information unavailable.")
         return redirect(url_for("login"))
-
-    # Fetch the current goal's start_date and end_date
     sql_fetch = text("""
         SELECT start_date, end_date 
         FROM Savings_goals
@@ -626,17 +631,11 @@ def restart_goal(goal_id):
     if not goal:
         flash("Goal not found.")
         return redirect(url_for("savings_goals"))
-
-    # Calculate the duration of the goal
     original_start_date = goal._mapping["start_date"]
     original_end_date = goal._mapping["end_date"]
     goal_duration = (original_end_date - original_start_date).days
-
-    # Set the new start_date to today and calculate the new end_date
     new_start_date = datetime.now().date()
     new_end_date = new_start_date + timedelta(days=goal_duration)
-
-    # Update the goal: reset achieved amount, set status to 'Active', and update start_date and end_date
     sql_update = text("""
         UPDATE Savings_goals 
         SET Achieved_amount = 0, Goal_status = 'Active', start_date = :new_start_date, end_date = :new_end_date
@@ -659,7 +658,6 @@ def progress_bar(id):
     user_id = session.get("user_id")
     family_head_id = session.get("family_head_id")
 
-    # Fetch goal details
     sql = text("""
         SELECT * FROM Savings_goals 
         WHERE goal_id = :goal_id AND (user_id = :user_id OR family_head_id = :family_head_id)
@@ -741,13 +739,8 @@ def get_alerts():
     alerts=db.session.query(Alert)
     alert=[]
     for i in alerts:
-        alert.append([i.alert_id,i.alert_date,i.alert_message,i.alert_type,i.budget_id,i.is_resolved])
-    return jsonify({"alerts":alerts}),200
-
-
-
-
-
+        alert.append([i.alert_id,i.alert_date.strftime('%Y-%m-%d'),i.alert_message,i.alert_type.name,i.budget_id,i.is_resolved])
+    return jsonify({"alerts":alert}),200
 
 
 #MODULE 5 

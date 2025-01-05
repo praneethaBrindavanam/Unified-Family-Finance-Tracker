@@ -140,7 +140,8 @@
         <th>Edit</th>
         <th>Delete</th>
         <th>Add Amount</th>
-        <th>Restart</th> <!-- Restart column -->
+        <th>Restart</th>
+        <th>Progress_bar</th> <!-- Restart column -->
       </tr>
     </thead>
     <tbody>
@@ -179,7 +180,7 @@
           </form>
         </td>
         <td>
-          <a href="{{url_for('progress_bar', id=data.goal_id)}}">SHOW PROGRESS</a>
+          <a href="{{url_for('progress_bar', id=data.goal_id)}}">SHOW_PROGRESS</a>
         </td>
       </tr>
       {% endfor %}
