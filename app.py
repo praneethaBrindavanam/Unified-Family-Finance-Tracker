@@ -22,11 +22,11 @@ app.config['UPLOAD_FOLDER'] = 'Recipt_uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # SQLAlchemy Setup
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost:3306/unified_family'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:1234@localhost:3306/unified_family'
 #change the password and databasename as per your system
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = secrets.token_hex(16)
-DATABASE_URI = 'mysql+pymysql://root:root@localhost/unified_family'
+DATABASE_URI = 'mysql+pymysql://root:1234@localhost/unified_family'
 engine = create_engine(DATABASE_URI)
 metadata = MetaData()
 
@@ -240,6 +240,13 @@ def show_expenses():
     """Display all expenses."""
     selected_month = request.args.get('month')  # Get selected month from query params
     selected_category = request.args.get('category')
+    if selected_month == "":
+        selected_month = None
+    if selected_category == "":
+        selected_category = None 
+    if selected_category and not selected_month:
+        from datetime import datetime
+        selected_month = datetime.now().strftime('%Y-%m')
     with engine.connect() as conn:
         categories_result = conn.execute(select(categories.c.category_id, categories.c.category_name)).fetchall()
         # Base query to fetch all expenses
@@ -306,7 +313,7 @@ def submit():
         # flash('New expense added successfully','info')
 
         # Redirect to the expenses page
-        return redirect(url_for('index'))
+        return redirect(url_for('show_expenses'))
 
     except Exception as e:
         return f"<h1>Error: {str(e)}</h1>", 500
@@ -365,7 +372,7 @@ def edit(ExpenseID):
                 conn.commit()
 
                 # flash("Expense updated successfully!", 'success')
-                return redirect(url_for('index'))
+                return redirect(url_for('show_expenses'))
 
             except Exception as e:
                 flash(f"Error updating expense: {str(e)}", 'danger')
@@ -401,10 +408,34 @@ def add_amount_to_expenses():
     except Exception as e:
         return {"error": str(e)}, 500
     
+@app.route('/delete_expense/<int:ExpenseID>', methods=['POST'])
+def delete_expense(ExpenseID):
+    """
+    Deletes an expense by its ID.
+    """
+    try:
+        with engine.connect() as conn:
+            # Check if the expense exists
+            expense_to_delete = conn.execute(select(expenses).where(expenses.c.ExpenseID == ExpenseID)).fetchone()
+            if not expense_to_delete:
+                flash("Error: Expense not found!", 'danger')
+                return redirect(url_for('show_expenses'))
+
+            # Delete the expense
+            conn.execute(expenses.delete().where(expenses.c.ExpenseID == ExpenseID))
+            conn.commit()
+
+            flash("Expense deleted successfully!", 'success')
+            return redirect(url_for('show_expenses'))
+
+    except Exception as e:
+        flash(f"Error deleting expense: {str(e)}", 'danger')
+        return redirect(url_for('show_expenses'))
+    
 @app.route('/savings_goals', methods=['GET', 'POST'])
 def savings_goals():
-    user_id = session.get('user_id')
-    family_head_id = session.get('family_head_id')
+    user_id = 1#session.get('user_id')
+    family_head_id = 1#session.get('family_head_id')
 
 
     if not user_id or not family_head_id:
@@ -513,8 +544,8 @@ def add_amount(id):
 
 @app.route("/addgoal", methods=['GET', 'POST'])
 def add_Goal():
-    family_head_id = session.get('family_head_id')
-    user_id = session.get('user_id')
+    family_head_id =1 # session.get('family_head_id')
+    user_id = 1 #session.get('user_id')
 
     if request.method == "POST":
         target_amount = request.form['target_amount']
@@ -554,7 +585,7 @@ def add_Goal():
 
 @app.route("/edit_Goals/<string:id>", methods=['GET', 'POST'])
 def edit_Goals(id):
-    user_id = session.get('user_id')
+    user_id = 1 #session.get('user_id')
 
     if request.method == 'POST':
         target_amount = request.form['target_amount']
@@ -593,7 +624,7 @@ def edit_Goals(id):
 
 @app.route("/delete_Goals/<string:id>", methods=['POST' , 'GET'])
 def delete_Goals(id):
-    user_id = session.get('user_id')
+    user_id = 1 # session.get('user_id')
 
     sql = text("DELETE FROM Savings_goals WHERE Goal_id = :goal_id AND User_id = :user_id")
     db.session.execute(sql, {"goal_id": id, "user_id": user_id})
