@@ -79,7 +79,7 @@ async function handleUpdate(event) {
     alert("Failed to delete the budget.");
   }
 
-  closeUpdateModal(); // Close the modal
+closeUpdateModal(); // Close the modal
 }
 
 function closeUpdateModal() {
@@ -121,4 +121,36 @@ async function renewBudget(category_id,limit,start_date,end_date,user_id){
   } catch (err) {
       console.log(err);
   }
+}
+
+function filterTable() {
+  let month = document.getElementById("month-selector").value;
+  let category = document.getElementById("category-selector").value;
+  let limit = document.getElementById("limit-filter").value;
+  let startDate = document.getElementById("start-date-filter").value;
+
+  let rows = document.querySelectorAll("#alertTable tbody tr");
+
+  rows.forEach(row => {
+    let rowCategory = row.children[1].textContent;
+    let rowLimit = row.children[2].textContent;
+    let rowStartDate = row.children[3].textContent;
+
+    let showRow = true;
+
+    if (month) {
+      let rowMonth = new Date(rowStartDate).getMonth() + 1; 
+      if (rowMonth != month) showRow = false;
+    }
+
+    // Filter by category
+    if (category && rowCategory != category) showRow = false;
+
+    // Filter by limit (if budget limit is greater than the input)
+    if (limit && rowLimit > limit) showRow = false;
+
+    if (startDate && rowStartDate < startDate) showRow = false;
+
+    row.style.display = showRow ? "" : "none";
+  });
 }
