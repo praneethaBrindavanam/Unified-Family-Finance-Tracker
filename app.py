@@ -434,25 +434,14 @@ def delete_expense(ExpenseID):
     
 @app.route('/savings_goals', methods=['GET', 'POST'])
 def savings_goals():
-    from flask import session  
-    if not session.get('user_id') or not session.get('family_head_id'):
-        sql = text("SELECT User_id, family_head_id FROM user LIMIT 1")
-        user = db.session.execute(sql).fetchone()
+    user_id = flask_session.get('user_id')
+    family_head_id = flask_session.get('family_head_id')
 
-        if user:
-            session['user_id'] = user._mapping['User_id']
-            session['family_head_id'] = user._mapping['family_head_id']
-        else:
-            flash("No user found in the database.")
-            return redirect(url_for('login'))
-    user_id = session.get('user_id')  # Changed 'User_id' to 'user_id'
-    family_head_id = session.get('family_head_id')
-
-    
     if not user_id or not family_head_id:
         flash("User not logged in or family information unavailable.")
         return redirect(url_for('login'))
-    
+
+    # Update expired goals
     sql_update = text("""
         UPDATE Savings_goals
         SET Goal_status = 'Not Achieved'
@@ -462,9 +451,11 @@ def savings_goals():
     db.session.execute(sql_update)
     db.session.commit()
 
+    # Filters and search
     status_filter = request.args.get('status', 'all')
     search_query = request.form.get('search_query', '').strip()
 
+    # Build query dynamically
     base_query = """
         SELECT * 
         FROM Savings_goals
@@ -476,10 +467,10 @@ def savings_goals():
 
     if status_filter != 'all':
         base_query += " AND Goal_status = :status_filter"
+
     if search_query:
         base_query += " AND Goal_description LIKE :search_query"
 
-    # Prepare the SQL query
     sql = text(base_query)
 
     query_params = {
@@ -490,16 +481,19 @@ def savings_goals():
     }
 
     savings_goals = db.session.execute(sql, {k: v for k, v in query_params.items() if v is not None}).fetchall()
+
     return render_template(
-        "saving_goal.html",
+        "savings_goals.html",
         datas=savings_goals,
         status_filter=status_filter,
         search_query=search_query
     )
+
+
 @app.route("/add_amount/<string:id>", methods=["GET", "POST"])
 def add_amount(id):
-    user_id = session.get("user_id")
-    family_head_id = session.get("family_head_id")
+    user_id = flask_session.get("user_id")
+    family_head_id = flask_session.get("family_head_id")
 
     sql = text("""
         SELECT * FROM Savings_goals 
@@ -509,6 +503,12 @@ def add_amount(id):
 
     if not goal:
         flash("Goal not found")
+        return redirect(url_for("savings_goals"))
+
+    goal_status = goal._mapping["Goal_status"]
+
+    if goal_status != "Active":
+        flash("Amount can only be added to active goals.")
         return redirect(url_for("savings_goals"))
 
     if request.method == "POST":
@@ -547,10 +547,11 @@ def add_amount(id):
     return render_template("add_amount.html", data=goal)
 
 
+
 @app.route("/addgoal", methods=['GET', 'POST'])
 def add_Goal():
-    family_head_id =1 # session.get('family_head_id')
-    user_id = 1 #session.get('user_id')
+    family_head_id = flask_session.get('family_head_id')
+    user_id = flask_session.get('user_id')
 
     if request.method == "POST":
         target_amount = request.form['target_amount']
@@ -590,7 +591,7 @@ def add_Goal():
 
 @app.route("/edit_Goals/<string:id>", methods=['GET', 'POST'])
 def edit_Goals(id):
-    user_id = 1 #session.get('user_id')
+    user_id = flask_session.get('user_id')
 
     if request.method == 'POST':
         target_amount = request.form['target_amount']
@@ -629,7 +630,7 @@ def edit_Goals(id):
 
 @app.route("/delete_Goals/<string:id>", methods=['POST' , 'GET'])
 def delete_Goals(id):
-    user_id = 1 # session.get('user_id')
+    user_id = flask_session.get('user_id')
 
     sql = text("DELETE FROM Savings_goals WHERE Goal_id = :goal_id AND User_id = :user_id")
     db.session.execute(sql, {"goal_id": id, "user_id": user_id})
@@ -641,12 +642,14 @@ def delete_Goals(id):
 
 @app.route("/restart_goal/<int:goal_id>", methods=["POST"])
 def restart_goal(goal_id):
-    user_id = session.get("user_id")
-    family_head_id = session.get("family_head_id")
+    user_id = flask_session.get("user_id")
+    family_head_id = flask_session.get("family_head_id")
 
     if not user_id or not family_head_id:
         flash("User not logged in or family information unavailable.")
         return redirect(url_for("login"))
+
+    # Fetch the current goal's start_date and end_date
     sql_fetch = text("""
         SELECT start_date, end_date 
         FROM Savings_goals
@@ -661,11 +664,17 @@ def restart_goal(goal_id):
     if not goal:
         flash("Goal not found.")
         return redirect(url_for("savings_goals"))
+
+    # Calculate the duration of the goal
     original_start_date = goal._mapping["start_date"]
     original_end_date = goal._mapping["end_date"]
     goal_duration = (original_end_date - original_start_date).days
+
+    # Set the new start_date to today and calculate the new end_date
     new_start_date = datetime.now().date()
     new_end_date = new_start_date + timedelta(days=goal_duration)
+
+    # Update the goal: reset achieved amount, set status to 'Active', and update start_date and end_date
     sql_update = text("""
         UPDATE Savings_goals 
         SET Achieved_amount = 0, Goal_status = 'Active', start_date = :new_start_date, end_date = :new_end_date
@@ -685,9 +694,10 @@ def restart_goal(goal_id):
 
 @app.route("/progress_bar/<string:id>", methods=["GET"])
 def progress_bar(id):
-    user_id = session.get("user_id")
-    family_head_id = session.get("family_head_id")
+    user_id = flask_session.get("user_id")
+    family_head_id = flask_session.get("family_head_id")
 
+    # Fetch goal details
     sql = text("""
         SELECT * FROM Savings_goals 
         WHERE goal_id = :goal_id AND (user_id = :user_id OR family_head_id = :family_head_id)
@@ -708,6 +718,8 @@ def progress_bar(id):
         goal=goal,
         progress_percentage=progress_percentage
     )
+
+
 @app.route('/budgethome')
 def budgethome():
     return render_template('index.html')
