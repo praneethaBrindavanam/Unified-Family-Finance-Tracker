@@ -483,7 +483,7 @@ def savings_goals():
     savings_goals = db.session.execute(sql, {k: v for k, v in query_params.items() if v is not None}).fetchall()
 
     return render_template(
-        "savings_goals.html",
+        "saving_goal.html",
         datas=savings_goals,
         status_filter=status_filter,
         search_query=search_query
