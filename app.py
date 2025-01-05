@@ -127,7 +127,7 @@ def insert_expense(category, amount, expense_date, description, receipt_path, ex
     """Insert a new expense into the database."""
     with engine.connect() as conn:
         conn.execute(expenses.insert().values(
-            UserID=2,  # Hardcoded for demonstration
+            UserID=1,  # Hardcoded for demonstration
             categoryid=category,
             amount=amount,
             expensedate=expense_date,
