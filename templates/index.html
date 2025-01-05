@@ -15,7 +15,7 @@
         <h2 id="heading" class="text-center">Budget Management</h2>
       </div>
       <div class="col-1" style="padding-top: 5px;">
-        <a class="btn" data-bs-toggle="offcanvas" href="#offcanvasExample" role="button" aria-controls="offcanvasExample">
+        <a class="btn" data-bs-toggle="offcanvas"  onclick="displayAlerts()" href="#offcanvasExample" role="button" aria-controls="offcanvasExample">
           <img src="../static/images/alert.png"/>
         </a>
       </div>
@@ -26,32 +26,46 @@
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
       </div>
       <div class="offcanvas-body">
-        <div>
+        <div id="blank message">
           Alerts for exceeding the budget appear here on updation of new expenses
+        </div>
+          <div class="container" id="alert-container">
         </div>
       </div>
     </div>
+
+
+
+
+
+
+
     <div class="row">
       <div class="col-8">
         <img id="mainimage" src="../static/images/budgethome.jpg" alt="Budget Management">
       </div>
-    <div class="col">
-      <div class="container features mt-5 text-center">
-        <div class="row py-3 my-5">
+      <div class="col">
+        <div class="container features mt-5 text-center">
+          <div class="row py-3 my-5">
             <div class="col">
                 <i class="fas fa-plus-circle feature-icon"></i>
                 <h3>Add Budget</h3>
                 <p>Easily create and customize budgets to fit your financial needs.</p>
-                <a href="http://127.0.0.1:5000/addBudget">Create Budget</a>
+                <a class="btn btn-primary" href="http://127.0.0.1:5000/addBudget">Create Budget</a>
             </div>
+          </div>
+        <div class="row">
+          <div class="col">
+            <i class="fas fa-chart-pie feature-icon"></i>
+            <h3>View Budgets</h3>
+            <p>Track your active budgets and see spending breakdowns in real-time.</p>
+            <div  style="height: 40px;"  class="progress" role="progressbar" aria-label="Animated striped example" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100">
+              <div id="budgetpercentage" class="progress-bar progress-bar-striped bg-info progress-bar-animated text-center" style="width: 75%;">75% limit of all budgets reached</div>
+            </div>
+            <br/>
+            <a class="btn btn-primary" href="http://127.0.0.1:5000/Budget">View Budgets</a>
         </div>
-        <div class="row"></div>
-            <div class="col">
-                <i class="fas fa-chart-pie feature-icon"></i>
-                <h3>View Budgets</h3>
-                <p>Track your active budgets and see spending breakdowns in real-time.</p>
-                <a href="http://127.0.0.1:5000/Budget;">View Budgets</a>
-            </div>
+        </div>
         </div>
     </div>
     </div>
