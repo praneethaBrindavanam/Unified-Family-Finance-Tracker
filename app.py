@@ -167,7 +167,7 @@ def user_login(email, password):
         return result.user_id
     return False    
 
-
+@app.route('/')
 @app.route('/home.html')
 def home():
     return render_template('home.html')
