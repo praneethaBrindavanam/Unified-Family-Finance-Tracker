@@ -1,8 +1,8 @@
 import io
-from flask import Flask, request, render_template, send_file, session as flask_session, url_for, redirect, flash , send_file
+from flask import Flask, request, render_template, send_file, url_for, redirect, flash , send_file
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import text
+from sqlalchemy import column, text
 import secrets
 import enum
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -16,17 +16,18 @@ from models import db,Budget,Alert
 import matplotlib.pyplot as plt
 import os
 import pandas as pd
-
+from flask import session as flask_session
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'Recipt_uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # SQLAlchemy Setup
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:Hemaramachandran6010@localhost:3306/dummy'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost/unified_family'
+
 #change the password and databasename as per your system
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = secrets.token_hex(16)
-DATABASE_URI = 'mysql+pymysql://root:Hemaramachandran6010@localhost:3306/dummy'
+DATABASE_URI = 'mysql+pymysql://root:root@localhost/unified_family'
 engine = create_engine(DATABASE_URI)
 metadata = MetaData()
 
@@ -60,11 +61,13 @@ users = Table(
     Column('user_id', Integer, primary_key=True, autoincrement=True),
     Column('name', String(255), nullable=False),
     Column('email', String(255), unique=True, nullable=False),
-    Column('password_hash', String(255), nullable=False),
+    Column('password_hash', String(255), nullable=False), 
     Column('phone_number', String(20), nullable=True),
-    Column('role', String(50), nullable=False),
-    Column('created_at', TIMESTAMP, nullable=False, server_default=func.now())
+    Column('created_at', TIMESTAMP, nullable=False, server_default=func.now()),  
+    Column('family_head_id', Integer, nullable=False)  ,
+    Column('role', String(50), nullable=False)
 )
+
 
 class Users(db.Model):
     __tablename__ = 'users'
@@ -75,6 +78,8 @@ class Users(db.Model):
     phone_number = Column(String(20), nullable=True)
     role = Column(String(50), nullable=False)
     created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())
+    family_head_id = Column(Integer , nullable = False )
+    
     
 expenses = Table(
     'expenses', metadata,
@@ -127,7 +132,7 @@ def insert_expense(category, amount, expense_date, description, receipt_path, ex
     """Insert a new expense into the database."""
     with engine.connect() as conn:
         conn.execute(expenses.insert().values(
-            UserID=1,  # Hardcoded for demonstration
+            UserID=2,  # Hardcoded for demonstration
             categoryid=category,
             amount=amount,
             expensedate=expense_date,
@@ -166,6 +171,12 @@ def user_login(email, password):
     if result and check_password_hash(result.password_hash, password):
         return result.user_id
     return False    
+
+
+
+
+
+
 
 @app.route('/')
 @app.route('/home.html')
@@ -210,6 +221,7 @@ def login():
         if user_id:  # If user_id is returned, login is successful
             flask_session['user_id'] =user.user_id  # Store user_id in session
             flask_session['role']=user.role
+            flask_session['family_head_id'] = user.family_head_id
             return redirect(url_for('navigationbar'))
         else:
             flash("Invalid email or password.", "danger")
@@ -240,13 +252,6 @@ def show_expenses():
     """Display all expenses."""
     selected_month = request.args.get('month')  # Get selected month from query params
     selected_category = request.args.get('category')
-    if selected_month == "":
-        selected_month = None
-    if selected_category == "":
-        selected_category = None 
-    if selected_category and not selected_month:
-        from datetime import datetime
-        selected_month = datetime.now().strftime('%Y-%m')
     with engine.connect() as conn:
         categories_result = conn.execute(select(categories.c.category_id, categories.c.category_name)).fetchall()
         # Base query to fetch all expenses
@@ -313,7 +318,7 @@ def submit():
         # flash('New expense added successfully','info')
 
         # Redirect to the expenses page
-        return redirect(url_for('show_expenses'))
+        return redirect(url_for('index'))
 
     except Exception as e:
         return f"<h1>Error: {str(e)}</h1>", 500
@@ -372,13 +377,45 @@ def edit(ExpenseID):
                 conn.commit()
 
                 # flash("Expense updated successfully!", 'success')
-                return redirect(url_for('show_expenses'))
+                return redirect(url_for('index'))
 
             except Exception as e:
                 flash(f"Error updating expense: {str(e)}", 'danger')
                 return redirect(request.url)
         # Render the edit form with current expense data and category list
     return render_template('edit_expenses.html',expense=updating_expense,categories=category)
+
+@app.route("/cancel_goal/<string:id>", methods=["POST"])
+def cancel_goal(id):
+    user_id = flask_session.get("user_id")
+    family_head_id = flask_session.get("family_head_id")
+
+    if not user_id or not family_head_id:
+        flash("User not logged in or family information unavailable.")
+        return redirect(url_for("login"))
+
+    # Check if goal exists and belongs to the user or family
+    sql_check = text("""
+        SELECT * FROM Savings_goals 
+        WHERE Goal_id = :goal_id AND (User_id = :user_id OR family_head_id = :family_head_id)""")
+    goal = db.session.execute(sql_check, {"goal_id": id, "user_id": user_id, "family_head_id": family_head_id}).fetchone()
+
+    if not goal:
+        flash("Goal not found or access denied.")
+        return redirect(url_for("savings_goals"))
+
+    # Update goal status to "Cancelled"
+    sql_update = text("""
+        UPDATE Savings_goals 
+        SET Goal_status = 'Cancelled' 
+        WHERE Goal_id = :goal_id AND (User_id = :user_id OR family_head_id = :family_head_id)
+    """
+    )
+    db.session.execute(sql_update, {"goal_id": id, "user_id": user_id, "family_head_id": family_head_id})
+    db.session.commit()
+
+    flash("Goal cancelled successfully!")
+    return redirect(url_for("savings_goals"))
 
 @app.route('/add_amount_to_expenses', methods=['POST'])
 def add_amount_to_expenses():
@@ -408,30 +445,7 @@ def add_amount_to_expenses():
     except Exception as e:
         return {"error": str(e)}, 500
     
-@app.route('/delete_expense/<int:ExpenseID>', methods=['POST'])
-def delete_expense(ExpenseID):
-    """
-    Deletes an expense by its ID.
-    """
-    try:
-        with engine.connect() as conn:
-            # Check if the expense exists
-            expense_to_delete = conn.execute(select(expenses).where(expenses.c.ExpenseID == ExpenseID)).fetchone()
-            if not expense_to_delete:
-                flash("Error: Expense not found!", 'danger')
-                return redirect(url_for('show_expenses'))
 
-            # Delete the expense
-            conn.execute(expenses.delete().where(expenses.c.ExpenseID == ExpenseID))
-            conn.commit()
-
-            flash("Expense deleted successfully!", 'success')
-            return redirect(url_for('show_expenses'))
-
-    except Exception as e:
-        flash(f"Error deleting expense: {str(e)}", 'danger')
-        return redirect(url_for('show_expenses'))
-    
 @app.route('/savings_goals', methods=['GET', 'POST'])
 def savings_goals():
     user_id = flask_session.get('user_id')
@@ -640,6 +654,7 @@ def delete_Goals(id):
     return redirect(url_for("savings_goals"))
 
 
+
 @app.route("/restart_goal/<int:goal_id>", methods=["POST"])
 def restart_goal(goal_id):
     user_id = flask_session.get("user_id")
@@ -718,7 +733,6 @@ def progress_bar(id):
         goal=goal,
         progress_percentage=progress_percentage
     )
-
 
 @app.route('/budgethome')
 def budgethome():
