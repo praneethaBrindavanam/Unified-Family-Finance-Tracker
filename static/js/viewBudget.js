@@ -128,6 +128,7 @@ function filterTable() {
   let category = document.getElementById("category-selector").value;
   let limit = document.getElementById("limit-filter").value;
   let startDate = document.getElementById("start-date-filter").value;
+  let user_id=document.getElementById("user-selector").value;
 
   let rows = document.querySelectorAll("#alertTable tbody tr");
 
@@ -135,6 +136,7 @@ function filterTable() {
     let rowCategory = row.children[1].textContent;
     let rowLimit = row.children[2].textContent;
     let rowStartDate = row.children[3].textContent;
+    let rowUserId=row.children[5].textContent;
 
     let showRow = true;
 
@@ -143,14 +145,43 @@ function filterTable() {
       if (rowMonth != month) showRow = false;
     }
 
+    if(user_id && user_id!=rowUserId) showRow= false;
     // Filter by category
     if (category && rowCategory != category) showRow = false;
 
     // Filter by limit (if budget limit is greater than the input)
-    if (limit && rowLimit > limit) showRow = false;
+    if (limit && parseFloat(rowLimit) > parseFloat(limit)) showRow = false;
+
 
     if (startDate && rowStartDate < startDate) showRow = false;
 
     row.style.display = showRow ? "" : "none";
   });
+}
+
+function sortTable() {
+  let table = document.getElementById("alertTable");
+  let rows = Array.from(table.tBodies[0].rows);
+  let sortOrder = document.getElementById("month-sorter").value;
+
+  if (sortOrder === "") return;  // If "None" is selected, exit the function
+
+  let ascending = sortOrder == 1;
+
+  rows.sort((a, b) => {
+    let aDate = parseDate(a.cells[3].textContent);  // "Start" column is at index 3
+    let bDate = parseDate(b.cells[3].textContent);
+
+    return ascending ? aDate - bDate : bDate - aDate;
+  });
+
+  // Append rows in sorted order
+  rows.forEach(row => table.tBodies[0].appendChild(row));
+}
+
+// Helper function to parse date strings
+function parseDate(dateString) {
+  if (!dateString) return new Date(0);  // Handle empty dates by returning oldest date
+  let parts = dateString.split('-');  // Assumes format YYYY-MM-DD
+  return new Date(parts[0], parts[1] - 1, parts[2]);  // Month is zero-based
 }

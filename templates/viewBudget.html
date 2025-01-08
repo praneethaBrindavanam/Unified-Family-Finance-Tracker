@@ -38,13 +38,36 @@
         <option value=3>Education</option>
         <option value=4>Medicines</option>
       </select>
-    
+      
+
       <label for="limit-filter">Expense Limit (max):</label>
       <input type="number" id="limit-filter" oninput="filterTable()">
+
+      <br/>
+      <br/>
     
       <label for="start-date-filter">Start Date:</label>
       <input type="date" id="start-date-filter" onchange="filterTable()">
+
+      <label for="user-selector">User ID:</label>
+      <select id="user-selector" onchange="filterTable()">
+        <option value="">All</option>
+        <option value=1>1</option>
+        <option value=2>2</option>
+        <option value=3>3</option>
+        <option value=4>4</option>
+      </select>
     </div>
+    <div id="sorters">
+      <h3>Sort By:</h3>
+      <label for="month-sorter">Month:</label>
+      <select id="month-sorter" onchange="sortTable()">
+        <option value="">None</option>
+        <option value=1>Ascending</option>
+        <option value=0>Descending</option>
+      </select>
+    </div>
+
     
     <div class="alert-table">
       <table id="alertTable">
@@ -112,4 +135,7 @@
           <button type="button" onclick="closeUpdateModal()">Cancel</button>
         </form>
       </div>
- 
+ </div>
+ </div>
+</body>
+</html>
