@@ -117,7 +117,7 @@ class SavingsGoal(db.Model):
     Target_amount = db.Column(db.Float, nullable=True)
     start_date = db.Column(db.Date, nullable=True)
     end_date = db.Column(db.Date, nullable=True)
-    Goal_status = db.Column(db.Enum('On-going', 'Completed', 'Cancelled'), default='On-going')
+    Goal_status = db.Column(db.Enum('On-going', 'Completed', 'Cancelled','Not Achieved','Active'), default='On-going')
     Goal_description = db.Column(db.Text, nullable=True)
     Achieved_amount = db.Column(db.Float, nullable=True)
     Goal_type = db.Column(db.Enum('Personal', 'Family'), default='Personal')
