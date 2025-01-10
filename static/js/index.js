@@ -51,15 +51,25 @@ async function displayAlerts(){
   }
 }
 
-async function getPercentage(){
-  response=await fetch('http://127.0.0.1:5000/BudgetPercentage',{
-    method:"GET"
-  })
-  const percentage=await response.json();
-  percentage=percentage["percent"];
-  const bar=document.getElementById("budgetpercentage");
-  bar.style.width=percentage+"%";
+async function getPercentage() {
+  try {
+      const response = await fetch('http://127.0.0.1:5000/BudgetPercentage', {
+          method: "GET"
+      });
+      if (!response.ok) {
+          throw new Error("Failed to fetch percentage. Status: " + response.status);
+      }
+      const data = await response.json();
+      const percentage = data["percent"];
+      const bar = document.getElementById("budgetpercentage");
+      bar.style.width = percentage + "%";
+      bar.innerText = `${percentage.toFixed(2)}% of the total budget limit used`;
+      bar.setAttribute("aria-valuenow", percentage); 
+  } catch (error) {
+      console.error("Error fetching budget percentage:", error);
+  }
 }
+
 
 document.addEventListener("DOMContentLoaded", function() {
   getPercentage();

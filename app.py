@@ -745,21 +745,44 @@ def bud():
 
 @app.route('/viewAlerts')
 def ale():
+    user_id=flask_session.get("user_id")
+    family_head_id=flask_session.get("family_head_id")
     with db.engine.connect() as conn:
         alerts=conn.execute(text("select * from alert"))
         alerts=[[a.alert_id,a.budget_id,a.alert_type,a.alert_message,a.alert_date,a.is_resolved] for a in alerts]
         return render_template('Alerts.html',alerts=alerts)
+    
+@app.route("/BudgetPercentage", methods=["GET"])
+def BudgetPercentage():
+    user_id = flask_session.get("user_id")
+    family_head_id = flask_session.get("family_head_id")
+    sql = text("""SELECT (SUM(e.amount) / SUM(b.limit)) * 100 
+            FROM budgets b 
+            INNER JOIN expenses e ON b.category_id = e.categoryid 
+            WHERE b.user_id = :user AND e.UserID = :user
+        """)
+    percentage = db.session.execute(sql, {"user": user_id}).scalar()
+    return jsonify({"percent": percentage}), 200
+
+    
 
 @app.route('/Budget',methods=['GET'])
 def getall_budget():
-    budgets=db.session.query(Budget).all()
+    user_id=flask_session.get("user_id")
+    family_head_id=flask_session.get("family_head_id")
+    print(user_id,family_head_id)
+    sql=text("SELECT * FROM  budgets where user_id =:user")
+    budgets=db.session.execute(sql,{
+        'user':user_id
+    })
     budgets=[[budget.budget_id,budget.category_id,budget.limit,budget.start_date,budget.end_date,budget.user_id] for budget in budgets]
     return render_template('viewBudget.html',budgets=budgets)
 
 @app.route('/Budget',methods=['POST'])
 def add_budget():
+    user=flask_session.get("user_id")
     data=request.get_json()
-    budget=Budget(category_id=data['category_id'],user_id=data['user_id'],limit=data['limit'],start_date=data['start_date'],end_date=data['end_date'])
+    budget=Budget(category_id=data['category_id'],user_id=user,limit=data['limit'],start_date=data['start_date'],end_date=data['end_date'])
     db.session.add(budget)
     db.session.commit()
     return jsonify({"message":"Budget created successfully"}),201
