@@ -23,15 +23,16 @@ function toggleDarkMode() {
   window.onload = showSlides;
 
 async function displayAlerts(){
+  const container=document.getElementById("alert-container")
+  if(container.childElementCount>0) return;
   response=await fetch("http://127.0.0.1:5000/Alerts",{
     method:"GET"
   })
   alerts=await response.json()
   console.log(alerts["alerts"]);
-  const container=document.getElementById("alert-container")
   for(alert of alerts["alerts"]){
     const node=document.createElement("div")
-    node.innerHTML=`<div class="alert ${alert[3]=='WARNING'?'alert-primary':'alert-danger'}" role="alert">
+    node.innerHTML=`<div class="alert ${alert[3]=='Warning'?'alert-primary':'alert-danger'}" role="alert">
                       <div class="hstack gap-3">
                       <div class="p-0">BudgetId-${alert[4]}</div>
                       <div class="p-0">${alert[1]}</div>
