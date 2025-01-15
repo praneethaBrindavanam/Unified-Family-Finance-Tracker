@@ -44,8 +44,8 @@ class Budget(db.Model):
     end_date=db.Column(db.Date)
 
 class AlertType(enum.Enum):
-    WARNING = 'WARNING'
-    CRITICAL = 'CRITICAL'
+    Warning = 'Warning'
+    Critical = 'Critical'
 
 class Alert(db.Model):
     __tablename__ = "alert"
@@ -815,10 +815,20 @@ def update_budget():
 
 @app.route('/Alerts',methods=["GET"])
 def get_alerts():
-    alerts=db.session.query(Alert)
+    user_id=flask_session.get("user_id")
+    family_head_id=flask_session.get("family_head_id")
+    sql=text(""" 
+            SELECT * FROM  alert WHERE  
+             budget_id  IN (SELECT budget_id FROM budgets
+             WHERE user_id=:user OR user_id=:head)
+        """)
+    alerts=db.session.execute(sql,{
+        "user":user_id,
+        "head":family_head_id
+    })
     alert=[]
     for i in alerts:
-        alert.append([i.alert_id,i.alert_date.strftime('%Y-%m-%d'),i.alert_message,i.alert_type.name,i.budget_id,i.is_resolved])
+        alert.append([i.alert_id,i.alert_date.strftime('%Y-%m-%d'),i.alert_message,i.alert_type,i.budget_id,i.is_resolved])
     return jsonify({"alerts":alert}),200
 
 
