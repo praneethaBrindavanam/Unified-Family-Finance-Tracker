@@ -44,8 +44,8 @@ class Budget(db.Model):
     end_date=db.Column(db.Date)
 
 class AlertType(enum.Enum):
-    WARNING = 'WARNING'
-    CRITICAL = 'CRITICAL'
+    Warning = 'Warning'
+    Critical = 'Critical'
 
 class Alert(db.Model):
     __tablename__ = "alert"
@@ -873,25 +873,66 @@ def budgethome():
 
 @app.route('/addBudget')
 def bud():
-    return render_template('addBudget.html')
+    user_id=flask_session.get("user_id")
+    sql=text("SELECT name from users WHERE user_id=:id")
+    user_name=db.session.execute(sql,{
+        "id":user_id
+    }).scalar()
+    cat=db.session.execute(text("Select category_id,category_name from categories"))
+    family_head_id=flask_session.get("family_head_id")
+    return render_template('addBudget.html',data=user_name,categories=cat)
 
 @app.route('/viewAlerts')
 def ale():
+    user_id=flask_session.get("user_id")
+    family_head_id=flask_session.get("family_head_id")
     with db.engine.connect() as conn:
         alerts=conn.execute(text("select * from alert"))
         alerts=[[a.alert_id,a.budget_id,a.alert_type,a.alert_message,a.alert_date,a.is_resolved] for a in alerts]
         return render_template('Alerts.html',alerts=alerts)
+    
+@app.route("/BudgetPercentage", methods=["GET"])
+def BudgetPercentage():
+    user_id = flask_session.get("user_id")
+    family_head_id = flask_session.get("family_head_id")
+    sql = text("""SELECT (SUM(e.amount) / SUM(b.limit)) * 100 
+            FROM budgets b 
+            INNER JOIN expenses e ON b.category_id = e.categoryid 
+            WHERE b.user_id = :user AND e.UserID = :user
+        """)
+    percentage = db.session.execute(sql, {"user": user_id}).scalar()
+    return jsonify({"percent": percentage}), 200
+
+    
 
 @app.route('/Budget',methods=['GET'])
 def getall_budget():
-    budgets=db.session.query(Budget).all()
-    budgets=[[budget.budget_id,budget.category_id,budget.limit,budget.start_date,budget.end_date,budget.user_id] for budget in budgets]
+    user_id=flask_session.get("user_id")
+    family_head_id=flask_session.get("family_head_id")
+    users_dict={0:None}
+    users=db.session.execute(text("Select user_id,name from users where user_id in (SELECT user_id from users where family_head_id=:head)")
+    ,{"head":family_head_id})
+    for user in users:
+        users_dict[user.user_id]=user.name
+    print(user_id,family_head_id)
+    if user_id==family_head_id:
+        sql=(text("SELECT * FROM budgets where user_id in (SELECT user_id from users where family_head_id=:head)"))
+        budgets=db.session.execute(sql,{
+            'head':family_head_id
+        })
+    else:
+        sql=text("SELECT * FROM  budgets where user_id =:user")
+        budgets=db.session.execute(sql,{
+            'user':user_id
+        })
+    budgets=[[budget.budget_id,budget.category_id,budget.limit,budget.start_date,budget.end_date,users_dict[budget.user_id]] for budget in budgets]
     return render_template('viewBudget.html',budgets=budgets)
 
 @app.route('/Budget',methods=['POST'])
 def add_budget():
+    user=flask_session.get("user_id")
     data=request.get_json()
-    budget=Budget(category_id=data['category_id'],user_id=data['user_id'],limit=data['limit'],start_date=data['start_date'],end_date=data['end_date'])
+    budget=Budget(category_id=data['category_id'],user_id=user,limit=data['limit'],start_date=data['start_date'],end_date=data['end_date'])
     db.session.add(budget)
     db.session.commit()
     return jsonify({"message":"Budget created successfully"}),201
@@ -924,11 +965,45 @@ def update_budget():
 
 @app.route('/Alerts',methods=["GET"])
 def get_alerts():
-    alerts=db.session.query(Alert)
+    user_id=flask_session.get("user_id")
+    family_head_id=flask_session.get("family_head_id")
+    if user_id==family_head_id:
+        sql=text(""" 
+            SELECT * FROM  alert WHERE  
+             budget_id  IN (SELECT budget_id FROM budgets
+             WHERE user_id IN (select user_id from users where user_id=:user or family_head_id=:head))
+             AND is_resolved=0
+        """)
+        alerts=db.session.execute(sql,{
+            "user":user_id,
+            "head":family_head_id
+        })
+    else:
+        sql=text(""" 
+             SELECT * FROM  alert WHERE  
+             budget_id  IN (SELECT budget_id FROM budgets
+             WHERE user_id=:user)
+             AND is_resolved=0
+        """)
+        alerts=db.session.execute(sql,{
+            "user":user_id,
+        })
     alert=[]
     for i in alerts:
-        alert.append([i.alert_id,i.alert_date.strftime('%Y-%m-%d'),i.alert_message,i.alert_type.name,i.budget_id,i.is_resolved])
+        alert.append([i.alert_id,i.alert_date.strftime('%Y-%m-%d'),i.alert_message,i.alert_type,i.budget_id,i.is_resolved])
     return jsonify({"alerts":alert}),200
+
+@app.route('/MarkAlert',methods=["PUT"])
+def MarkAlert():
+    data=request.get_json()
+    print(data)
+    try:
+        alert = db.session.execute(text("UPDATE alert SET is_resolved = 1 WHERE alert_id = :id"),{"id":data["alert_id"]})
+        db.session.commit()
+        return jsonify({"ok":1}),200
+    except Exception as e:
+        print(str(e))
+        return jsonify({"ok":0}),400
 
 
 #MODULE 5 

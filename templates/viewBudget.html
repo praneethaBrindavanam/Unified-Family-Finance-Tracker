@@ -78,7 +78,7 @@
             <th>Limit</th>  
             <th>Start</th>
             <th>End</th>
-            <th>UserId</th>
+            <th>User</th>
             <th>Update</th>
             <th>Delete</th>
             <th>Renew</th>
@@ -93,7 +93,7 @@
                 <td>{{budget[3]}}</td>
                 <td>{{budget[4]}}</td>
                 <td>{{budget[5]}}</td>
-                <td onclick="openUpdateModal('{{budget[0]}}', '{{budget[1]}}', '{{budget[2]}}', '{{budget[3]}}', '{{budget[4]}}', '{{budget[5]}}')">
+                <td onclick="openUpdateModal('{{budget[0]}}', '{{budget[1]}}', '{{budget[2]}}', '{{budget[3]}}', '{{budget[4]}}')">
 
                 <i class="fas fa-edit" style="color: #3498db;"></i>
                 </td>
@@ -119,11 +119,7 @@
           <input type="number" id="budgetAmount" name="budgetAmount"><br><br>
   
           <label for="budgetCategory">Category:</label>
-          <select id="budgetCategory" name="budgetCategory" >
-            <option value=1>Category 1</option>
-            <option value=2>Category 2</option>
-            <option value=3>Category 3</option>
-          </select><br><br>
+          <input type="text" id="budgetCategory" name="budgetCategory" disabled>
   
           <label for="startDate">Start Date:</label>
           <input type="date" id="startDate" name="startDate"><br><br>
