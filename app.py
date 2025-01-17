@@ -839,7 +839,8 @@ def get_alerts():
         sql=text(""" 
             SELECT * FROM  alert WHERE  
              budget_id  IN (SELECT budget_id FROM budgets
-             WHERE user_id=:user OR user_id=:head)
+             WHERE user_id IN (select user_id from users where user_id=:user or family_head_id=:head))
+             AND is_resolved=0
         """)
         alerts=db.session.execute(sql,{
             "user":user_id,
@@ -847,9 +848,10 @@ def get_alerts():
         })
     else:
         sql=text(""" 
-            SELECT * FROM  alert WHERE  
+             SELECT * FROM  alert WHERE  
              budget_id  IN (SELECT budget_id FROM budgets
              WHERE user_id=:user)
+             AND is_resolved=0
         """)
         alerts=db.session.execute(sql,{
             "user":user_id,
@@ -858,6 +860,18 @@ def get_alerts():
     for i in alerts:
         alert.append([i.alert_id,i.alert_date.strftime('%Y-%m-%d'),i.alert_message,i.alert_type,i.budget_id,i.is_resolved])
     return jsonify({"alerts":alert}),200
+
+@app.route('/MarkAlert',methods=["PUT"])
+def MarkAlert():
+    data=request.get_json()
+    print(data)
+    try:
+        alert = db.session.execute(text("UPDATE alert SET is_resolved = 1 WHERE alert_id = :id"),{"id":data["alert_id"]})
+        db.session.commit()
+        return jsonify({"ok":1}),200
+    except Exception as e:
+        print(str(e))
+        return jsonify({"ok":0}),400
 
 
 #MODULE 5 
