@@ -34,7 +34,7 @@
         <div class="row g-0 mx-0">
             <div class="col-6">
                 <div class="greeting">
-                    <p class="fs-2">Hey User</p>
+                    <p class="fs-2">Hey {{data}}</p>
                     <p>Fill the budget details and click on Add Budget</p>
                 </div>
                 <img src="../static/images/createbudget.jpg" class="img-fluid" alt="">
@@ -46,12 +46,15 @@
                     <form action="/register" method="POST">
                         <label for="Category">Category:</label>
                         <select id="Category" name="Category" required>
-                            <option value=1>Food</option>
-                            <option value=2>Outing</option>
-                            <option value=3>Education</option>
-                            <option value=4>Medicines</option>
+                          {% if categories %}
+                          {% for category in categories %}
+                              <option value="{{ category[0] }}">{{ category[1] }}</option>
+                          {% endfor %}
+                          {% else %}
+                          <option value="" disabled>No categories available</option>
+                          {% endif %}
                         </select>
-                        
+                  
                         <label for="limit">Expense Limit:</label>
                         <input type="number" id="limit" name="limit" required>
                         
