@@ -22,35 +22,77 @@ function toggleDarkMode() {
   
   window.onload = showSlides;
 
-async function displayAlerts(){
-  const container=document.getElementById("alert-container")
-  if(container.childElementCount>0) return;
-  response=await fetch("http://127.0.0.1:5000/Alerts",{
-    method:"GET"
-  })
-  alerts=await response.json()
-  console.log(alerts["alerts"]);
-  for(alert of alerts["alerts"]){
-    const node=document.createElement("div")
-    node.innerHTML=`<div class="alert ${alert[3]=='Warning'?'alert-primary':'alert-danger'}" role="alert">
-                      <div class="hstack gap-3">
-                      <div class="p-0">BudgetId-${alert[4]}</div>
-                      <div class="p-0">${alert[1]}</div>
-                      <div class="p-0">
-                        <a class="btn" data-bs-toggle="collapse" href="#${alert[0]}" role="button" aria-expanded="false" aria-controls="collapseExample">
-                        🔽
-                        </a>
-                      </div>
-                      </div>
-              <div class="collapse" id="${alert[0]}">
-                <div class="card card-body">
-                  <p>${alert[2]}</p>
-                </div>
-              </div>              
-          </div>`
-    container.appendChild(node);
+async function resolveAlert(id) {
+  try {
+    const response = await fetch('http://127.0.0.1:5000/MarkAlert', {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ "alert_id": id })
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to Mark Alert. Status: " + response.status);
+    }
+    
+    // Remove or update the alert in the UI
+    const alertElement = document.getElementById(`alert-${id}`);
+    if (alertElement) {
+      alertElement.remove(); // Remove alert from the DOM
+    }
+  } catch (error) {
+    console.error("Error Updating Alert Status:", error);
   }
 }
+
+async function displayAlerts() {
+  const container = document.getElementById("alert-container");
+
+  // Avoid loading duplicate alerts
+  if (container.childElementCount > 0) return;
+
+  try {
+    const response = await fetch("http://127.0.0.1:5000/Alerts", {
+      method: "GET",
+    });
+    const alerts = await response.json();
+    console.log(alerts["alerts"]);
+
+    for (const alert of alerts["alerts"]) {
+      document.getElementById("blankmessage").style.display = "none";
+
+      // Create alert element
+      const node = document.createElement("div");
+      node.id = `alert-${alert[0]}`; // Unique ID for the alert
+      node.innerHTML = `
+        <div class="alert ${alert[3] === 'Warning' ? 'alert-primary' : 'alert-danger'}" role="alert">
+          <div class="hstack gap-3">
+            <div class="p-0">BudgetId-${alert[4]}</div>
+            <div class="p-0">${alert[1]}</div>
+            <div class="p-0">
+              <a class="btn" data-bs-toggle="collapse" href="#details-${alert[0]}" role="button" aria-expanded="false" aria-controls="collapseExample">
+                🔽
+              </a>
+            </div>
+          </div>
+          <div class="collapse" id="details-${alert[0]}">
+            <div class="card card-body">
+              <p>${alert[2]}</p>
+              <button onclick="resolveAlert(${alert[0]})" class="btn btn-success">
+                <i class="fas fa-check-circle"></i> Mark As Resolved
+              </button>
+            </div>
+          </div>              
+        </div>`;
+      
+      container.appendChild(node);
+    }
+  } catch (error) {
+    console.error("Error fetching alerts:", error);
+  }
+}
+
 
 async function getPercentage() {
   try {
@@ -68,6 +110,29 @@ async function getPercentage() {
       bar.setAttribute("aria-valuenow", percentage); 
   } catch (error) {
       console.error("Error fetching budget percentage:", error);
+  }
+}
+
+async function resolveAlert(id) {
+  try {
+    const response = await fetch('http://127.0.0.1:5000/MarkAlert', {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ "alert_id": id })
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to Mark Alert. Status: " + response.status);
+    }
+    
+    const alertElement = document.getElementById(`alert-${id}`);
+    if (alertElement) {
+      alertElement.remove(); 
+    }
+  } catch (error) {
+    console.error("Error Updating Alert Status:", error);
   }
 }
 
