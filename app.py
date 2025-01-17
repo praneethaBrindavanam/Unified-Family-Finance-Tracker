@@ -22,12 +22,12 @@ app.config['UPLOAD_FOLDER'] = 'Recipt_uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # SQLAlchemy Setup
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost/unified_family'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:1234@localhost/udb08012025'
 
 #change the password and databasename as per your system
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = secrets.token_hex(16)
-DATABASE_URI = 'mysql+pymysql://root:root@localhost/unified_family'
+DATABASE_URI = 'mysql+pymysql://root:1234@localhost/udb08012025'
 engine = create_engine(DATABASE_URI)
 metadata = MetaData()
 
@@ -117,7 +117,7 @@ class SavingsGoal(db.Model):
     Target_amount = db.Column(db.Float, nullable=True)
     start_date = db.Column(db.Date, nullable=True)
     end_date = db.Column(db.Date, nullable=True)
-    Goal_status = db.Column(db.Enum('On-going', 'Completed', 'Cancelled'), default='On-going')
+    Goal_status = db.Column(db.Enum('On-going', 'Completed', 'Cancelled','Not Achieved','Active'), default='On-going')
     Goal_description = db.Column(db.Text, nullable=True)
     Achieved_amount = db.Column(db.Float, nullable=True)
     Goal_type = db.Column(db.Enum('Personal', 'Family'), default='Personal')
@@ -249,11 +249,43 @@ def form():
 
 @app.route('/show_expenses', methods=['GET'])
 def show_expenses():
-    """Display all expenses."""
-    selected_month = request.args.get('month')  # Get selected month from query params
+    """Display all expenses and quick stats."""
+    # Retrieve filters from query parameters
+    selected_month = request.args.get('month')
     selected_category = request.args.get('category')
+    time_period = request.args.get('time_period')  # Parameter for quick filters
+    start_date = request.args.get('start_date')  # Start date for custom range
+    end_date = request.args.get('end_date')  # End date for custom range
+
+    # Parse filters
+    if selected_month == "":
+        selected_month = None
+    if selected_category == "":
+        selected_category = None
+
+    # Handle quick filters (time_period)
+    if time_period == "last_10_days":
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=10)
+    elif time_period == "1_month":
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=30)
+    elif time_period == "3_months":
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=90)
+    else:
+        # Convert string dates to datetime for custom range filters
+        if start_date:
+            start_date = datetime.strptime(start_date, '%Y-%m-%d')
+        if end_date:
+            end_date = datetime.strptime(end_date, '%Y-%m-%d')
+
     with engine.connect() as conn:
-        categories_result = conn.execute(select(categories.c.category_id, categories.c.category_name)).fetchall()
+        # Fetch categories
+        categories_result = conn.execute(
+            select(categories.c.category_id, categories.c.category_name)
+        ).fetchall()
+
         # Base query to fetch all expenses
         query = select(
             expenses.c.ExpenseID,
@@ -264,23 +296,99 @@ def show_expenses():
             expenses.c.expensedesc,
             expenses.c.receiptpath,
             expenses.c.expensetime,
-            categories.c.category_name  # Select category name
+            categories.c.category_name
         ).select_from(expenses.join(categories, expenses.c.categoryid == categories.c.category_id))
 
-        # Apply month filter if selected
+        # Apply filters
         if selected_month:
             query = query.where(expenses.c.expensedate.like(f"{selected_month}-%"))
         if selected_category:
             query = query.where(categories.c.category_name == selected_category)
+        if start_date and end_date:
+            query = query.where(expenses.c.expensedate.between(start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')))
+        elif start_date:
+            query = query.where(expenses.c.expensedate >= start_date.strftime('%Y-%m-%d'))
+        elif end_date:
+            query = query.where(expenses.c.expensedate <= end_date.strftime('%Y-%m-%d'))
 
+        # Execute the query to fetch expenses
         result = conn.execute(query).fetchall()
-        
+
         # Fetch distinct months for dropdown
         months_query = conn.execute(select(expenses.c.expensedate.distinct())).fetchall()
         months = sorted(set(expensedate.strftime('%Y-%m') for expensedate, in months_query))
 
-    return render_template('show_expenses.html', expenses=result, months=months, selected_month=selected_month, selected_category=selected_category, categories=categories_result)
+        # Fetch min and max amount
+        min_max_query = conn.execute(
+            select(
+                db.func.min(expenses.c.amount).label('min_amount'),
+                db.func.max(expenses.c.amount).label('max_amount')
+            )
+        ).fetchone()
 
+        # Set default values if query does not return results
+        min_amount = min_max_query.min_amount if min_max_query and min_max_query.min_amount is not None else 0
+        max_amount = min_max_query.max_amount if min_max_query and min_max_query.max_amount is not None else 10000  # Use a reasonable default
+
+        # Quick Stats Query
+        total_spent = conn.execute(select(db.func.sum(expenses.c.amount))).scalar() or 0
+        num_expenses = conn.execute(select(db.func.count(expenses.c.ExpenseID))).scalar() or 0
+        avg_expense = conn.execute(select(db.func.avg(expenses.c.amount))).scalar() or 0
+
+        # Highest Spent Category with Name
+        highest_spent_category = conn.execute(
+            select(
+                categories.c.category_name,  # Retrieve category name
+                db.func.sum(expenses.c.amount).label('total_amount')
+            )
+            .join(categories, categories.c.category_id == expenses.c.categoryid)  # Correct join using category_id
+            .group_by(categories.c.category_name)  # Group by category name
+            .order_by(db.func.sum(expenses.c.amount).desc())
+            .limit(1)
+        ).fetchone()
+
+        highest_spent_category_name = highest_spent_category[0] if highest_spent_category else 'None'
+        highest_spent_category_total = highest_spent_category[1] if highest_spent_category else 0.0
+
+
+
+    # Pass the stats to the template along with the expenses
+    return render_template(
+        'show_expenses.html',
+        expenses=result,
+        months=months,
+        selected_month=selected_month,
+        selected_category=selected_category,
+        categories=categories_result,
+        min_amount=min_amount,
+        max_amount=max_amount,
+        selected_time_period=time_period,  # Pass selected time period
+        start_date=start_date.strftime('%Y-%m-%d') if start_date else '',  # Preserve custom start date
+        end_date=end_date.strftime('%Y-%m-%d') if end_date else '',  # Preserve custom end date
+        # Quick Stats
+        total_spent=total_spent,
+        num_expenses=num_expenses,
+        avg_expense=avg_expense,
+        highest_spent_category_name=highest_spent_category_name,
+        highest_spent_category_total=highest_spent_category_total
+    )
+
+
+@app.route('/add_new_category', methods=['POST'])
+def add_new_category():
+    try:
+        category_name = request.form['category_name']
+        category_desc= request.form['category_desc']
+        with engine.connect() as conn:
+            conn.execute(categories.insert().values(
+                category_name=category_name,
+                description=category_desc
+            ))
+            conn.commit()
+        return redirect(url_for('form'))
+    except Exception as e:
+        return {"error": str(e)}, 500
+                
 @app.route('/submit', methods=['POST'])
 def submit():
     """Handle expense submission."""
@@ -318,7 +426,7 @@ def submit():
         # flash('New expense added successfully','info')
 
         # Redirect to the expenses page
-        return redirect(url_for('index'))
+        return redirect(url_for('show_expenses'))
 
     except Exception as e:
         return f"<h1>Error: {str(e)}</h1>", 500
@@ -377,7 +485,7 @@ def edit(ExpenseID):
                 conn.commit()
 
                 # flash("Expense updated successfully!", 'success')
-                return redirect(url_for('index'))
+                return redirect(url_for('show_expenses'))
 
             except Exception as e:
                 flash(f"Error updating expense: {str(e)}", 'danger')
@@ -385,6 +493,58 @@ def edit(ExpenseID):
         # Render the edit form with current expense data and category list
     return render_template('edit_expenses.html',expense=updating_expense,categories=category)
 
+@app.route('/add_amount_to_expenses', methods=['POST'])
+def add_amount_to_expenses():
+    """Handle adding amount to an expense."""
+    try:
+        data = request.get_json()
+        ExpenseID = data['ExpenseID']
+        added_amount = float(data['addedAmount'])
+
+        with engine.connect() as conn:
+            # Fetch current amount
+            current_expense = conn.execute(select(expenses).where(expenses.c.ExpenseID == ExpenseID)).fetchone()
+            if not current_expense:
+                return {"error": "Expense not found"}, 404
+
+            new_amount = current_expense.amount + added_amount
+
+            # Update the amount
+            conn.execute(
+                expenses.update()
+                .where(expenses.c.ExpenseID == ExpenseID)
+                .values(amount=new_amount)
+            )
+            conn.commit()
+
+        return {"message": "Amount added successfully!"}, 200
+    except Exception as e:
+        return {"error": str(e)}, 500
+    
+@app.route('/delete_expense/<int:ExpenseID>', methods=['POST'])
+def delete_expense(ExpenseID):
+    """
+    Deletes an expense by its ID.
+    """
+    try:
+        with engine.connect() as conn:
+            # Check if the expense exists
+            expense_to_delete = conn.execute(select(expenses).where(expenses.c.ExpenseID == ExpenseID)).fetchone()
+            if not expense_to_delete:
+                flash("Error: Expense not found!", 'danger')
+                return redirect(url_for('show_expenses'))
+
+            # Delete the expense
+            conn.execute(expenses.delete().where(expenses.c.ExpenseID == ExpenseID))
+            conn.commit()
+
+            flash("Expense deleted successfully!", 'success')
+            return redirect(url_for('show_expenses'))
+
+    except Exception as e:
+        flash(f"Error deleting expense: {str(e)}", 'danger')
+        return redirect(url_for('show_expenses'))
+    
 @app.route("/cancel_goal/<string:id>", methods=["POST"])
 def cancel_goal(id):
     user_id = flask_session.get("user_id")
@@ -416,34 +576,6 @@ def cancel_goal(id):
 
     flash("Goal cancelled successfully!")
     return redirect(url_for("savings_goals"))
-
-@app.route('/add_amount_to_expenses', methods=['POST'])
-def add_amount_to_expenses():
-    """Handle adding amount to an expense."""
-    try:
-        data = request.get_json()
-        ExpenseID = data['ExpenseID']
-        added_amount = float(data['addedAmount'])
-
-        with engine.connect() as conn:
-            # Fetch current amount
-            current_expense = conn.execute(select(expenses).where(expenses.c.ExpenseID == ExpenseID)).fetchone()
-            if not current_expense:
-                return {"error": "Expense not found"}, 404
-
-            new_amount = current_expense.amount + added_amount
-
-            # Update the amount
-            conn.execute(
-                expenses.update()
-                .where(expenses.c.ExpenseID == ExpenseID)
-                .values(amount=new_amount)
-            )
-            conn.commit()
-
-        return {"message": "Amount added successfully!"}, 200
-    except Exception as e:
-        return {"error": str(e)}, 500
     
 
 @app.route('/savings_goals', methods=['GET', 'POST'])
