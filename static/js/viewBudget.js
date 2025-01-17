@@ -28,9 +28,8 @@ async function deleteBudget(id) {
 
 function openUpdateModal(
   budgetId,
-  budgetName,
-  budgetAmount,
   category,
+  budgetAmount,
   startDate,
   endDate
 ) {

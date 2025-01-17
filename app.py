@@ -741,7 +741,14 @@ def budgethome():
 
 @app.route('/addBudget')
 def bud():
-    return render_template('addBudget.html')
+    user_id=flask_session.get("user_id")
+    sql=text("SELECT name from users WHERE user_id=:id")
+    user_name=db.session.execute(sql,{
+        "id":user_id
+    }).scalar()
+    cat=db.session.execute(text("Select category_id,category_name from categories"))
+    family_head_id=flask_session.get("family_head_id")
+    return render_template('addBudget.html',data=user_name,categories=cat)
 
 @app.route('/viewAlerts')
 def ale():
@@ -770,12 +777,23 @@ def BudgetPercentage():
 def getall_budget():
     user_id=flask_session.get("user_id")
     family_head_id=flask_session.get("family_head_id")
+    users_dict={0:None}
+    users=db.session.execute(text("Select user_id,name from users where user_id in (SELECT user_id from users where family_head_id=:head)")
+    ,{"head":family_head_id})
+    for user in users:
+        users_dict[user.user_id]=user.name
     print(user_id,family_head_id)
-    sql=text("SELECT * FROM  budgets where user_id =:user")
-    budgets=db.session.execute(sql,{
-        'user':user_id
-    })
-    budgets=[[budget.budget_id,budget.category_id,budget.limit,budget.start_date,budget.end_date,budget.user_id] for budget in budgets]
+    if user_id==family_head_id:
+        sql=(text("SELECT * FROM budgets where user_id in (SELECT user_id from users where family_head_id=:head)"))
+        budgets=db.session.execute(sql,{
+            'head':family_head_id
+        })
+    else:
+        sql=text("SELECT * FROM  budgets where user_id =:user")
+        budgets=db.session.execute(sql,{
+            'user':user_id
+        })
+    budgets=[[budget.budget_id,budget.category_id,budget.limit,budget.start_date,budget.end_date,users_dict[budget.user_id]] for budget in budgets]
     return render_template('viewBudget.html',budgets=budgets)
 
 @app.route('/Budget',methods=['POST'])
@@ -817,15 +835,25 @@ def update_budget():
 def get_alerts():
     user_id=flask_session.get("user_id")
     family_head_id=flask_session.get("family_head_id")
-    sql=text(""" 
+    if user_id==family_head_id:
+        sql=text(""" 
             SELECT * FROM  alert WHERE  
              budget_id  IN (SELECT budget_id FROM budgets
              WHERE user_id=:user OR user_id=:head)
         """)
-    alerts=db.session.execute(sql,{
-        "user":user_id,
-        "head":family_head_id
-    })
+        alerts=db.session.execute(sql,{
+            "user":user_id,
+            "head":family_head_id
+        })
+    else:
+        sql=text(""" 
+            SELECT * FROM  alert WHERE  
+             budget_id  IN (SELECT budget_id FROM budgets
+             WHERE user_id=:user)
+        """)
+        alerts=db.session.execute(sql,{
+            "user":user_id,
+        })
     alert=[]
     for i in alerts:
         alert.append([i.alert_id,i.alert_date.strftime('%Y-%m-%d'),i.alert_message,i.alert_type,i.budget_id,i.is_resolved])
