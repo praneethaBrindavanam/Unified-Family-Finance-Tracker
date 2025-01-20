@@ -97,21 +97,42 @@ async function displayAlerts() {
 async function getPercentage() {
   try {
       const response = await fetch('http://127.0.0.1:5000/BudgetPercentage', {
-          method: "GET"
+          method: "GET",
       });
       if (!response.ok) {
           throw new Error("Failed to fetch percentage. Status: " + response.status);
       }
       const data = await response.json();
+      console.log("Raw data received:", data);
+
       const percentage = data["percent"];
+      
+      // Validate and clamp percentage
+      if (isNaN(percentage)) {
+          throw new Error("Invalid percentage value received: " + percentage);
+      }
+      const validPercentage = Math.min(Math.max(percentage, 0), 100);
+
+      // Update progress bar
       const bar = document.getElementById("budgetpercentage");
-      bar.style.width = percentage + "%";
-      bar.innerText = `${percentage.toFixed(2)}% of the total budget limit used`;
-      bar.setAttribute("aria-valuenow", percentage); 
+      if (!bar) {
+          throw new Error("Progress bar element not found in DOM.");
+      }
+      bar.style.width = validPercentage + "%";
+      bar.innerText = `${validPercentage.toFixed(2)}% limit exhausted`;
+      bar.setAttribute("aria-valuenow", validPercentage);
   } catch (error) {
       console.error("Error fetching budget percentage:", error);
+
+      // Handle missing or error state in the UI
+      const bar = document.getElementById("budgetpercentage");
+      if (bar) {
+          bar.style.width = "0%";
+          bar.innerText = "Error loading budget data";
+      }
   }
 }
+
 
 async function resolveAlert(id) {
   try {
