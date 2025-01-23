@@ -519,7 +519,7 @@ def get_user_data(query, user_id=None, is_family_head=False):
         return query.filter_by(user_id=user_id).all()
 
 def fetch_budgets(start_date=None, end_date=None, category_id=None):
-    user_id = flask_session.get('user_id')  # Retrieving user_id from session
+    user_id = flask_session.get('user_id') 
     query = Budget.query.filter_by(user_id=user_id)
 
     # Apply filters
@@ -602,40 +602,39 @@ def fetch_savings_goals(start_date=None, end_date=None, status=None):
 
 @app.route('/budget')
 def budget():
-    # Get the user role and user ID from the session
     role = flask_session.get('role')
     user_id = flask_session.get('user_id')
     
-    # Fetch budget data
     budgets = fetch_budgets()
     filtered_budgets=''
 
     if role == 'FamilyHead':
-        # If the user is a FamilyHead, show all data
         filtered_budgets = budgets
     else:
-        # If the user is a regular user, show only their personal data
         filtered_budgets = budgets[budgets['user_id'] == user_id]
         print(filtered_budgets)
-
-    categories = filtered_budgets['category_id'].unique()
+        query = text("""
+        SELECT DISTINCT c.category_name 
+        FROM categories c
+        JOIN budgets b ON c.category_id = b.category_id
+        WHERE b.user_id = :user_id
+        """)
+    result = db.session.execute(query, {"user_id": user_id})
+    categories = [row.category_name for row in result]
+    print("Categories:", categories)
     return render_template('budgetfilter.html', categories=categories, budgets=filtered_budgets)
 
 
 @app.route('/savings')
 def savings():
-    # Get the user role and user ID from the session
     role = flask_session.get('role')
     user_id = flask_session.get('user_id')
 
-    # Fetch savings goal data
     savings_goals = fetch_savings_goals()
 
     if role == 'FamilyHead':
-        # If the user is a FamilyHead, show all data
         filtered_savings = savings_goals
     else:
-        # If the user is a regular user, show only their personal data
         filtered_savings = savings_goals[savings_goals['User_id'] == user_id]
 
     statuses = filtered_savings['Goal_status'].unique()
@@ -643,21 +642,24 @@ def savings():
 
 @app.route('/expense')
 def expense():
-    # Get the user role and user ID from the session
     role = flask_session.get('role')
     user_id = flask_session.get('user_id')
 
-    # Fetch expense data
     expenses = fetch_expenses()
 
     if role == 'FamilyHead':
-        # If the user is a FamilyHead, show all data
         filtered_expenses = expenses
     else:
-        # If the user is a regular user, show only their personal data
         filtered_expenses = expenses[expenses['UserID'] == user_id]
-
-    categories = filtered_expenses['categoryid'].unique()
+        query = text("""
+        SELECT DISTINCT c.category_name 
+        FROM categories c
+        JOIN expenses b ON c.category_id = b.categoryid
+        WHERE b.UserID = :user_id
+        """)
+    
+    result = db.session.execute(query, {"user_id": user_id})
+    categories = [row.category_name for row in result]
     return render_template('expenses.html', categories=categories, expenses=filtered_expenses)
 
 
@@ -1021,7 +1023,6 @@ def send_report_email_route():
 
 @app.route('/scorecards')
 def scorecards():
-    # Get query parameters
     user_id = request.args.get('user_id', default=2, type=int )  # Default to 2 for testing
     month = request.args.get('month', default=pd.to_datetime('now').month, type=int)
     year = request.args.get('year', default=pd.to_datetime('now').year, type=int)
