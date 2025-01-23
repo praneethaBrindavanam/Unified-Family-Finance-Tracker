@@ -1000,10 +1000,11 @@ def ale():
 def BudgetPercentage():
     user_id = flask_session.get("user_id")
     family_head_id = flask_session.get("family_head_id")
-    sql = text("""SELECT (SUM(e.amount) / SUM(b.limit)) * 100 
+    sql = text("""SELECT (SUM(e.amount) /b.limit) * 100 
             FROM budgets b 
             INNER JOIN expenses e ON b.category_id = e.categoryid 
-            WHERE b.user_id = :user AND e.UserID = :user
+            WHERE b.user_id = :user AND e.UserID = :user AND e.expensedate BETWEEN b.start_date AND b.end_date
+            GROUP BY b.budget_id
         """)
     percentage = db.session.execute(sql, {"user": user_id}).scalar()
     return jsonify({"percent": percentage}), 200
