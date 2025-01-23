@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -33,7 +34,7 @@
         var target_amount = parseFloat(document.getElementById("Target_amount").textContent.replace('Target Amount: ', ''));
         var achieved_amount = parseFloat(document.getElementById("Achieved_amount").textContent.replace('Achieved Amount: ', ''));
         var total = target_amount - achieved_amount;
-        if (additional_amount == total) {
+        if (additional_amount > total) {
           document.getElementById("alert").innerText = "The additional Amount Exceeds the Target Goal amount";
           return false; 
         }
