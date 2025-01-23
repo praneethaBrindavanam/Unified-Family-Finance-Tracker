@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scorecards</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa; /* Light background */
+        }
+
+        .card {
+            border: 1px solid #007bff;
+        }
+
+        .card-header {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .score {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .score-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .percentage-container {
+            position: relative;
+            width: 100px; /* Fixed width for percentage display */
+            height: 100px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            transition: background-color 0.3s ease; /* Smooth transition for background color */
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column; /* Stack items vertically */
+            align-items: flex-start; /* Align items to the left */
+        }
+
+        .score-card {
+            width: 100%; /* Full width for score cards */
+            max-width: 600px; /* Optional: limit max width */
+            margin-bottom: 20px; /* Space between cards */
+        }
+
+        h1 {
+            margin-bottom: 20px; /* Space below the title */
+        }
+
+        .scorecards-container {
+            display: flex;
+            gap: 50px; /* Use flexbox for horizontal layout */
+            justify-content: space-between; /* Space between cards */
+            width: 100%; /* Full width */
+        }
+
+        form {
+            margin-bottom: 30px; /* Space below the form */
+        }
+
+        label {
+            margin-right: 10px; /* Space between label and input */
+        }
+
+        input {
+            margin-bottom: 10px; /* Space below inputs */
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Scorecard</h1>
+        <form action="/scorecards" method="get">
+            <div class="row mb-3">
+                <div class="col">
+                    <label for="user_id">User  ID:</label>
+                    <input type="number" id="user_id" name="user_id" class="form-control" required>
+                </div>
+                <div class="col">
+                    <label for="month">Month:</label>
+                    <input type="number" id="month" name="month" min="1" max="12" value="{{ now.month }}" class="form-control" required>
+                </div>
+                <div class="col">
+                    <label for="year">Year:</label>
+                    <input type="number" id="year" name="year" value="{{ now.year }}" class="form-control" required>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Get Scorecard</button>
+    <!--    <button type="button" class="btn btn-secondary" onclick="window.location.href='/scorecards/all'">Get Entire Scorecard</button> -->
+        </form>
+
+        <div class="scorecards-container">
+            <!-- Monthly Scorecard -->
+            <div class="score-card card">
+                <div class="card-header">
+                    <h5>Monthly Scorecard</h5>
+                </div>
+                <div class="card-body">
+                    <div class="score-container">
+                        <div>
+                            <p>Goal: ₹<span id="monthly-savings">{{ monthly_goals }}</span></p>
+                            <p>Budget: ₹<span id="monthly-budget">{{ monthly_budget }}</span></p>
+                            <p>Expenses: ₹<span id="monthly-expenses">{{ monthly_expenses }}</span></p>
+                            <p>Savings: ₹<span id="monthly-savings">{{ monthly_savings }}</span></p>
+                            <p>Overall Score: ₹<span id="monthly-overall">{{ overallscore }}</span></p>
+                        </div>
+                        <div class="percentage-container" id="monthly-percentage-container">
+                            <p id="monthly-percentage">{{ monthly_percentage | round(2) }}%</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Yearly Scorecard 
+            <div class="score-card card">
+                <div class="card-header">
+                    <h5>Yearly Scorecard</h5>
+                </div>
+                <div class="card-body">
+                    <div class="score-container">
+                        <div>
+                            <p>Goal: ₹<span id="yearly-savings">{{ yearly_goals }}</span></p>
+                            <p>Yearly Budget: ₹<span id="yearly-budget">{{ yearly_budget }}</span></p>
+                            <p>Yearly Expenses: ₹<span id="yearly-expenses">{{ yearly_expenses }}</span></p>
+                            <p>Yearly Savings: ₹<span id="yearly-savings">{{ yearly_savings }}</span></p>
+                            <p>Overall Score: ₹<span id="yearly-overall">{{ overall_yearly }}</span></p>
+                        </div>
+                        <div class="percentage-container" id="yearly-percentage-container">
+                            <p id="yearly-percentage"></p>
+                        </div>
+                        <div class="percentage-container" id="yearly-percentage-container">
+                            <p id="yearly-percentage"></p>
+                        </div>
+                        <div class="percentage-container" id="yearly-percentage-container">
+                            <p id="yearly-percentage"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        -->
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Function to change the background color of the percentage container based on its value
+        function updatePercentageBackgroundColor() {
+            const monthlyPercentage = parseFloat(document.getElementById('monthly-percentage').innerText);
+            const yearlyPercentage = parseFloat(document.getElementById('yearly-percentage').innerText);
+
+            const monthlyPercentageContainer = document.getElementById('monthly-percentage-container');
+            const yearlyPercentageContainer = document.getElementById('yearly-percentage-container');
+
+            // Change background color based on percentage value
+            monthlyPercentageContainer.style.backgroundColor = getBackgroundColorForPercentage(monthlyPercentage);
+            yearlyPercentageContainer.style.backgroundColor = getBackgroundColorForPercentage(yearlyPercentage);
+        }
+
+        // Function to determine background color based on percentage
+        function getBackgroundColorForPercentage(percentage) {
+            if (percentage < 50) {
+                return 'rgba(255, 0, 0, 0.7)'; // Red for low percentage
+            } else if (percentage < 75) {
+                return 'rgba(255, 165, 0, 0.7)'; // Orange for medium percentage
+            } else {
+                return 'rgba(0, 128, 0, 0.7)'; // Green for high percentage
+            }
+        }
+
+        // Call the function to update background colors on page load
+        window.onload = updatePercentageBackgroundColor;
+    </script>
+</body>
+</html>
