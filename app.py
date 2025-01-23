@@ -34,6 +34,16 @@ metadata = MetaData()
 db = SQLAlchemy(app)
 
 
+class Profile(db.Model):
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    username = db.Column(db.String(50), unique=True, nullable=False)
+    email = db.Column(db.String(100), unique=True, nullable=False)
+    fam_name = db.Column(db.String(50), nullable=False)
+    role = db.Column(db.String(50), nullable=False)
+    fam_code = db.Column(db.String(50), nullable=False)
+    password = db.Column(db.String(255), nullable=False) 
+
+
 class Budget(db.Model):
     __tablename__="budgets"
     budget_id=db.Column(db.Integer,primary_key=True,autoincrement=True)
@@ -183,49 +193,83 @@ def user_login(email, password):
 def home():
     return render_template('home.html')
 
-@app.route('/signup', methods=['GET', 'POST'])
-def signup():
-    if request.method == 'POST':
-        try:
-            # Get form data (ensure you have the correct field names)
-            name = request.json.get('name')
-            email = request.json.get('email')
-            password = request.json.get('password')
-            phone_number = request.json.get('phone')
-            role = request.json.get('role', 'users')  # Default to 'user'
-            print(f"Received: Name={name}, Email={email}, Role={role}")
-            if name and email and password:
-                # Call the function to add user to database
-                if add_user_with_verification(name, email, password, phone_number, role):
-                    return {"success": True, "message": "Signup successful!"}, 200
-                else:
-                    return {"success": False, "message": "Database error."}, 400
-            else:
-                return {"success": False, "message": "All fields are required."}, 400
-        except Exception as e:
-            print(f"Error in signup: {e}")
-            return {"success": False, "message": "An error occurred."}, 500
-    return render_template('signup.html')
+@app.route('/add', methods=["POST"])
+def add_profile():
+    """Handle form submission to add a new profile."""
+    id=request.form.get("id")
+    username = request.form.get("username")
+    email = request.form.get("email")
+    fam_name = request.form.get("fam_name")
+    role = request.form.get("role")
+    fam_code = request.form.get("fam_code")
+    password=request.form.get("password")
+
+    # Validation: Ensure all fields are filled
+    if not all([username, email, fam_name, role, fam_code]):
+        return "All fields are required!", 400
+
+    # Create a new profile
+    new_profile = Profile(
+        id=id,
+        username=username,
+        email=email,
+        fam_name=fam_name,
+        role=role,
+        fam_code=fam_code,
+        password=password
+    )
+
+    try:
+        db.session.add(new_profile)
+        db.session.commit()
+        return redirect('/index.html')
+    except Exception as e:
+        db.session.rollback()
+        return f"An error occurred: {e}", 500
+
+@app.route('/delete/<int:id>')
+def delete_profile(id):
+    """Delete a profile by ID."""
+    profile = Profile.query.get(id)
+    if not profile:
+        return "Profile not found!", 404
+
+    try:
+        db.session.delete(profile)
+        db.session.commit()
+        return redirect('/')
+    except Exception as e:
+        db.session.rollback()
+        return f"An error occurred: {e}", 500
+    
 
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
+        # Extract form data
         email = request.form.get('email')
         password = request.form.get('password')
-        user = Users.query.filter_by(email=email).first()
 
-        user_id = user_login(email, password)
-        user = Users.query.filter_by(email=email).first()
+        # Fetch the user from the database
+        user = Profile.query.filter_by(email=email).first()
 
-        if user_id:  # If user_id is returned, login is successful
-            flask_session['user_id'] =user.user_id  # Store user_id in session
-            flask_session['role']=user.role
-            flask_session['family_head_id'] = user.family_head_id
-            return redirect(url_for('navigationbar'))
+        if user and user.password == password:  # Replace with hash comparison in production
+            # Login successful: Set session variables
+            session['email'] = user.email
+            session['password'] = user.password
+            flash("Login successful!", "success")
+            # Redirect to home or dashboard
+            return render_template('dashboard.html')
         else:
-            flash("Invalid email or password.", "danger")
+            # Show an error message
+            flash("Invalid email or password. Please try again.", "danger")
+            return render_template('login.html')
+
+    # Render the login.html page on GET request
     return render_template('login.html')
+
+
 
 @app.route('/navigationbar')
 def navigationbar():
