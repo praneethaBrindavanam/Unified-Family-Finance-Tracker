@@ -187,6 +187,9 @@
         <h2 class="text-center" style="color: #fff;">Expenses</h2>
         <div class="text-center mb-3">
             <a href="/add_expenses" class="btn btn-primary" style="background-color: #bd6c73;">Add New Expense</a>
+            <button type="button" class="btn btn-primary" style="background-color: #bd6c73;" data-bs-toggle="modal" data-bs-target="#manageCategoriesModal">
+                Manage Categories
+            </button>
         </div>
         <div class="header mb-3">
             <form method="GET" action="{{ url_for('show_expenses') }}" style="margin: 0;">
@@ -363,6 +366,81 @@
                         <button type="submit" class="btn btn-success">Submit</button>
                     </form>
                 </div>
+            </div>
+        </div>
+    </div>
+    <!-- Manage Categories Modal -->
+    <div class="modal fade" id="manageCategoriesModal" tabindex="-1" aria-labelledby="manageCategoriesModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="manageCategoriesModalLabel">Manage Categories</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <p>What would you like to do?</p>
+                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addCategoryModal" data-bs-dismiss="modal">
+                        Add Category
+                    </button>
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteCategoryModal" data-bs-dismiss="modal">
+                        Delete Category
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Add Category Modal -->
+    <div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addCategoryModalLabel">Add Category</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="{{ url_for('add_new_category') }}" method="POST">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="category_name" class="form-label">Category Name</label>
+                            <input type="text" class="form-control" id="category_name" name="category_name" placeholder="Enter category name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="category_desc" class="form-label">Category Description</label>
+                            <textarea id="category_desc" name="category_desc" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-success">Add Category</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- Delete Category Modal -->
+    <div class="modal fade" id="deleteCategoryModal" tabindex="-1" aria-labelledby="deleteCategoryModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteCategoryModalLabel">Delete Category</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="{{ url_for('delete_category') }}" method="POST">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="category_id" class="form-label">Select Category to Delete</label>
+                            <select id="category_id" name="category_id" class="form-select" required>
+                                <option value="" selected>--Select Category--</option>
+                                {% for category in user_categories %}
+                                <option value="{{ category.category_id }}">{{ category.category_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-danger">Delete Category</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

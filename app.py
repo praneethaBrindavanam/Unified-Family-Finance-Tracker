@@ -17,17 +17,19 @@ import matplotlib.pyplot as plt
 import os
 import pandas as pd
 from flask import session as flask_session
+from sqlalchemy import Table, Column, Integer, String, ForeignKey
+from sqlalchemy.orm import relationship
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'Recipt_uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # SQLAlchemy Setup
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:1234@localhost/udb08012025'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost/recent'
 
 #change the password and databasename as per your system
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = secrets.token_hex(16)
-DATABASE_URI = 'mysql+pymysql://root:1234@localhost/udb08012025'
+DATABASE_URI = 'mysql+pymysql://root:root@localhost/recent'
 engine = create_engine(DATABASE_URI)
 metadata = MetaData()
 
@@ -97,7 +99,8 @@ categories=Table(
     'categories',metadata,
     Column('category_id',Integer,nullable=False,autoincrement=True),
     Column('category_name',String(100),nullable=False),
-    Column('description',String(300),nullable=True)
+    Column('description',String(300),nullable=True),
+    Column('user_id', Integer, ForeignKey('users.user_id'), nullable=False)  # Foreign key to 'users' table
 )
 
 class Expense(db.Model):
@@ -110,6 +113,17 @@ class Expense(db.Model):
     expensedesc = db.Column(db.String(500))
     receiptpath = db.Column(db.String(500))
     expensetime = db.Column(db.Time, nullable=False)
+
+class Category(db.Model):
+    __tablename__ = 'categories'
+
+    category_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    category_name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.String(300), nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
+
+    # Establish a relationship with the 'User' model (optional, if you want to reference user data directly)
+    user = relationship('Users', backref='categories', lazy=True)
 
 class SavingsGoal(db.Model):
     __tablename__ = 'savings_goals'
@@ -128,11 +142,11 @@ metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 session = Session()
 
-def insert_expense(category, amount, expense_date, description, receipt_path, expense_time):
+def insert_expense(user_id, category, amount, expense_date, description, receipt_path, expense_time):
     """Insert a new expense into the database."""
     with engine.connect() as conn:
         conn.execute(expenses.insert().values(
-            UserID=2,  # Hardcoded for demonstration
+            UserID=user_id,
             categoryid=category,
             amount=amount,
             expensedate=expense_date,
@@ -242,15 +256,47 @@ def verification():
 @app.route('/add_expenses', methods=['GET'])
 def form():
     """Render the expense form."""
+    user_id = flask_session.get('user_id')
+    print(user_id)
+
     with engine.connect() as conn:
-        result = conn.execute(select(categories)).fetchall()
-    print(result)
-    return render_template('add_expenses.html',categories=result)
+        # Fetch categories for the specific user (excluding predefined ones)
+        user_categories = conn.execute(
+            select(categories).where(categories.c.user_id == user_id)
+        ).fetchall()
+
+        # Fetch predefined categories for user_id = 1 (default categories)
+        predefined_categories = conn.execute(
+            select(categories).where(categories.c.user_id == 0)
+        ).fetchall()
+
+    # Count how many categories the user has
+    user_categories_count = len(user_categories)
+    max_categories_limit = 5
+
+    # Convert query results to dictionaries for easier access in the template
+    user_categories_list = [{"category_id": row[0], "category_name": row[1]} for row in user_categories]
+    predefined_categories_list = [{"category_id": row[0], "category_name": row[1]} for row in predefined_categories]
+
+    # Filter out predefined categories that already exist in user categories
+    predefined_categories_filtered = [
+        category for category in predefined_categories_list 
+        if category["category_id"] not in [cat["category_id"] for cat in user_categories_list]
+    ]
+    print(user_categories_list)
+    # Return template with formatted category data
+    return render_template('add_expenses.html', 
+                           user_categories=user_categories_list, 
+                           predefined_categories=predefined_categories_filtered,
+                           user_categories_count=user_categories_count,
+                           max_categories_limit=max_categories_limit)
 
 @app.route('/show_expenses', methods=['GET'])
 def show_expenses():
     """Display all expenses and quick stats."""
-    # Retrieve filters from query parameters
+    user_id = flask_session.get('user_id')
+    print(user_id)
+    
     selected_month = request.args.get('month')
     selected_category = request.args.get('category')
     time_period = request.args.get('time_period')  # Parameter for quick filters
@@ -281,9 +327,16 @@ def show_expenses():
             end_date = datetime.strptime(end_date, '%Y-%m-%d')
 
     with engine.connect() as conn:
-        # Fetch categories
-        categories_result = conn.execute(
+        # Fetch user-specific categories
+        user_categories = conn.execute(
             select(categories.c.category_id, categories.c.category_name)
+            .where(categories.c.user_id == user_id)
+        ).fetchall()
+
+        # Fetch predefined categories for user_id = 1
+        predefined_categories = conn.execute(
+            select(categories.c.category_id, categories.c.category_name)
+            .where(categories.c.user_id == 0)
         ).fetchall()
 
         # Base query to fetch all expenses
@@ -298,8 +351,9 @@ def show_expenses():
             expenses.c.expensetime,
             categories.c.category_name
         ).select_from(expenses.join(categories, expenses.c.categoryid == categories.c.category_id))
-
-        # Apply filters
+        query = query.where(expenses.c.UserID == user_id)
+        
+        # Apply filters to the query
         if selected_month:
             query = query.where(expenses.c.expensedate.like(f"{selected_month}-%"))
         if selected_category:
@@ -323,7 +377,7 @@ def show_expenses():
             select(
                 db.func.min(expenses.c.amount).label('min_amount'),
                 db.func.max(expenses.c.amount).label('max_amount')
-            )
+            ).where(expenses.c.UserID == user_id)  # Apply user filter here as well
         ).fetchone()
 
         # Set default values if query does not return results
@@ -331,9 +385,9 @@ def show_expenses():
         max_amount = min_max_query.max_amount if min_max_query and min_max_query.max_amount is not None else 10000  # Use a reasonable default
 
         # Quick Stats Query
-        total_spent = conn.execute(select(db.func.sum(expenses.c.amount))).scalar() or 0
-        num_expenses = conn.execute(select(db.func.count(expenses.c.ExpenseID))).scalar() or 0
-        avg_expense = conn.execute(select(db.func.avg(expenses.c.amount))).scalar() or 0
+        total_spent = conn.execute(select(db.func.sum(expenses.c.amount)).where(expenses.c.UserID == user_id)).scalar() or 0
+        num_expenses = conn.execute(select(db.func.count(expenses.c.ExpenseID)).where(expenses.c.UserID == user_id)).scalar() or 0
+        avg_expense = conn.execute(select(db.func.avg(expenses.c.amount)).where(expenses.c.UserID == user_id)).scalar() or 0
 
         # Highest Spent Category with Name
         highest_spent_category = conn.execute(
@@ -342,6 +396,7 @@ def show_expenses():
                 db.func.sum(expenses.c.amount).label('total_amount')
             )
             .join(categories, categories.c.category_id == expenses.c.categoryid)  # Correct join using category_id
+            .where(expenses.c.UserID == user_id)  # Apply user filter here as well
             .group_by(categories.c.category_name)  # Group by category name
             .order_by(db.func.sum(expenses.c.amount).desc())
             .limit(1)
@@ -349,9 +404,7 @@ def show_expenses():
 
         highest_spent_category_name = highest_spent_category[0] if highest_spent_category else 'None'
         highest_spent_category_total = highest_spent_category[1] if highest_spent_category else 0.0
-
-
-
+    print(user_categories)
     # Pass the stats to the template along with the expenses
     return render_template(
         'show_expenses.html',
@@ -359,7 +412,8 @@ def show_expenses():
         months=months,
         selected_month=selected_month,
         selected_category=selected_category,
-        categories=categories_result,
+        user_categories=user_categories,
+        predefined_categories=predefined_categories,
         min_amount=min_amount,
         max_amount=max_amount,
         selected_time_period=time_period,  # Pass selected time period
@@ -377,23 +431,74 @@ def show_expenses():
 @app.route('/add_new_category', methods=['POST'])
 def add_new_category():
     try:
+        user_id = flask_session.get('user_id')
+        MAX_CATEGORIES_PER_USER = 5
+
+        # Only check limits for non-predefined categories (user_id != 1)
+        if user_id != 0:
+            with engine.connect() as conn:
+                # Count the number of custom categories for the user
+                category_count = conn.execute(
+                    select(db.func.count().label('category_count'))
+                    .where(categories.c.user_id == user_id)
+                ).scalar()
+
+            if category_count >= MAX_CATEGORIES_PER_USER:
+                # Return an error if user exceeds max categories limit
+                return "<h1>Error: You have reached the limit of custom categories!</h1>", 400
+
         category_name = request.form['category_name']
-        category_desc= request.form['category_desc']
+        category_desc = request.form['category_desc']
+
         with engine.connect() as conn:
+            # Insert the new category for the user
             conn.execute(categories.insert().values(
                 category_name=category_name,
-                description=category_desc
+                description=category_desc,
+                user_id=user_id
             ))
             conn.commit()
-        return redirect(url_for('form'))
+
+        return redirect(url_for('show_expenses'))
+
     except Exception as e:
         return {"error": str(e)}, 500
-                
+    
+@app.route('/delete_category/', methods=['POST', 'GET'])
+def delete_category():
+    """Delete a user's custom category and associated expenses."""
+    user_id = flask_session.get('user_id')
+    category_id = request.form.get('category_id')
+    print(f"Attempting to delete category with ID {category_id} for user {user_id}")
+    if not category_id:
+        flash('No category selected.', 'danger')
+        return redirect(url_for('manage_categories'))
+    with engine.connect() as conn:
+        # Validate that the category exists and belongs to the user
+        category = conn.execute(
+            select(categories).where(
+                categories.c.category_id == category_id,
+                categories.c.user_id == user_id
+            )
+        ).fetchone()
+
+        if category:
+            # Delete the category
+            conn.execute(
+                expenses.delete().where(expenses.c.categoryid == category_id)
+            )
+            conn.execute(categories.delete().where(categories.c.category_id == category_id))
+            conn.commit()
+            flash('Category deleted successfully!', 'success')
+        else:
+            flash('Invalid category or you do not have permission to delete it.', 'danger')
+    return redirect(url_for('show_expenses'))
 @app.route('/submit', methods=['POST'])
 def submit():
     """Handle expense submission."""
     try:
         # Get required fields
+        user_id=flask_session.get('user_id')
         category = request.form.get('category')  # Use .get() to safely retrieve form data
         amount = int(request.form.get('amount'))
         date = request.form.get('date')
@@ -422,7 +527,7 @@ def submit():
             receipt_path = 'No file uploaded'
 
         # Insert data into the database
-        insert_expense(category, amount, date, description, receipt_path, time)
+        insert_expense(user_id, category, amount, date, description, receipt_path, time)
         # flash('New expense added successfully','info')
 
         # Redirect to the expenses page
