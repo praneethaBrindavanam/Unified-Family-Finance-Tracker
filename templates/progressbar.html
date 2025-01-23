@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -5,19 +6,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Progress Bar</title>
     <link rel="stylesheet" href="{{url_for('static', filename='style.css')}}">
+    <style>
+      
+    </style>
   </head>
   <body>
-    <h1>Progress for Goal: {{ goal.Goal_description }}</h1>
+    <h1>Progress for Goal: {{ goal._mapping['goal_name'] }}</h1>
     <div class="progress-container">
-        <div 
-            class="progress-bar" 
-            style="width: {{ progress_percentage }}%;"
-        >
-            {{ progress_percentage }}%
-        </div>
+      <div 
+        class="progress-bar" 
+        style="width: {{ progress_percentage or 0}}%; background-color: {{ progress_bar_color }};"
+        data-progress="{% if progress_percentage < 25 %}0-24{% elif progress_percentage < 50 %}25-49{% elif progress_percentage < 75 %}
+        50-74{% elif progress_percentage < 100 %}75-99{% else %}100{% endif %}"
+      >
+        {{ progress_percentage or 0}}%
+      </div>
     </div>
     <p class="progress-label">
-        Achieved: ₹{{ goal.Achieved_amount  }} / Target: ₹{{ goal.Target_amount }}
+      Achieved: ₹{{ goal._mapping['Achieved_amount'] or 0 }} / Target: ₹{{ goal._mapping['Target_amount'] }}
+    </p>
+    <p class="motivation-message" >
+
+      {{ motivational_message }}
     </p>
   </body>
 </html>
