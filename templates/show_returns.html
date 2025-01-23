@@ -1,0 +1,71 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculate Returns</title>
+    <title>Add New Investment</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+    <h1>Calculate Returns for {{ investment['investment_name'] }}</h1>
+    
+    <form method="POST" action="{{ url_for('calculate_returns', investment_id=investment.investment_id) }}">
+
+        <!-- Display investment details -->
+        <p><strong>Investment Name:</strong> {{ investment['investment_name'] }}</p>
+        <p><strong>Investment Type:</strong> {{ investment['investment_type'] }}</p>
+        <p><strong>Purchase Value:</strong> {{ investment['purchase_price'] }}</p>
+        <p><strong>Current Value:</strong> {{ investment['current_value'] }}</p>
+
+        <!-- Temporary fields based on investment type -->
+        <div>
+            {% if investment['investment_type'] == 'fixed_deposit'%}
+                <label for="interest_rate">Annual Interest Rate (%)</label>
+                <input type="number" step="any" name="interest_rate" placeholder="Annual Interest Rate (%)" 
+                       value="{{ interest_rate }}" required>
+            {% elif investment['investment_type'] == 'bonds' %}
+                <label for="face_value">Face Value</label>
+                <input type="number" step="any" name="face_value" placeholder="Face Value" value="{{ face_value }}" required>
+                <br>
+                <label for="accrued_interest">Accrued Interest</label>
+                <input type="number" step="any" name="accrued_interest" placeholder="Accrued Interest" 
+                       value="{{ accrued_interest }}" required>
+            
+            {% elif investment['investment_type'] == 'mutual_funds' %}
+                <label for="expense_ratio">Expense Ratio (%)</label>
+                <input type="number" step="any" name="expense_ratio" placeholder="Expense Ratio (%)" 
+                       value="{{ expense_ratio }}" required>
+                <br>
+                <label for="nav_growth">NAV Growth</label>
+                <input type="number" step="any" name="nav_growth" placeholder="NAV Growth" 
+                       value="{{ nav_growth }}" required>
+            {% elif investment['investment_type'] == 'real_estate' %}
+                <label for="rental_income">Rental Income</label>
+                <input type="number" step="any" name="rental_income" placeholder="Rental Income" 
+                       value="{{ rental_income }}" required>
+                <br>
+                <label for="property_appreciation">Property Appreciation</label>
+                <input type="number" step="any" name="property_appreciation" placeholder="Property Appreciation" 
+                       value="{{ property_appreciation }}" required>
+            {% elif investment['investment_type'] == 'savings_account' %}
+                <label for="interest_rate">Annual Interest Rate (%)</label>
+                <input type="number" step="any" name="interest_rate" placeholder="Annual Interest Rate (%)" 
+                       value="{{ interest_rate }}" required>
+            {% elif investment['investment_type'] == 'stocks' %}
+                <label for="dividend_yield">Dividend Yield (%)</label>
+                <input type="number" step="any" name="dividend_yield" placeholder="Dividend Yield (%)" 
+                        value="{{ dividend_yield }}" required>
+                       
+            {% endif %}
+        </div>
+
+        <p style="text-align:center; font-size:18px; font-weight:bold;">Calculated Returns: {% if results %} {{ results[0]['returns'] }} {% else %} No returns calculated yet. {% endif %}</p>
+        <button type="submit">Calculate Returns</button>
+    </form>
+
+</body>
+</html>
