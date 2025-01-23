@@ -1,0 +1,105 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Filter Savings Goals</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+  <h2>Filter Savings Goals</h2>
+
+  <form method="GET" action="{{ url_for('savings_goals') }}" id="filterForm">
+    <!-- Goal Type Filter -->
+    <label for="goal_type">Goal Type:</label>
+    <select id="goal_type" name="goal_type">
+      <option value="all">All</option>
+      <option value="Personal">Personal</option>
+      <option value="Family">Family</option>
+    </select>
+
+    <!-- Goal Status Filter -->
+    <label for="goal_status">Goal Status:</label>
+    <select id="goal_status" name="goal_status">
+      <option value="all">All</option>
+      <option value="Active">Active</option>
+      <option value="Achieved">Achieved</option>
+      <option value="Not Achieved">Not Achieved</option>
+      <option value="Cancelled">Cancelled</option>
+    </select>
+
+    <!-- Target Amount Inputs -->
+    <label for="min_target">Min Target Amount:</label>
+    <input type="number" id="min_target" name="min_target" min="{{ db_min }}" max="{{ db_max }}" step="100">
+
+    <label for="max_target">Max Target Amount:</label>
+    <input type="number" id="max_target" name="max_target" min="{{ db_min }}" max="{{ db_max }}" step="100">
+
+    <!-- Start & End Date -->
+    <label for="start_date">Start Date:</label>
+    <input type="date" id="start_date" name="start_date">
+
+    <label for="end_date">End Date:</label>
+    <input type="date" id="end_date" name="end_date">
+
+    <button type="submit">Apply Filters</button>
+    <button type="button" onclick="clearFilters()">Clear Filters</button>
+  </form>
+  
+  <script>
+    // Store filter values in sessionStorage
+    document.getElementById("filterForm").addEventListener("submit", function() {
+      sessionStorage.setItem("goal_type", document.getElementById("goal_type").value);
+      sessionStorage.setItem("goal_status", document.getElementById("goal_status").value);
+      sessionStorage.setItem("min_target", document.getElementById("min_target").value);
+      sessionStorage.setItem("max_target", document.getElementById("max_target").value);
+      sessionStorage.setItem("start_date", document.getElementById("start_date").value);
+      sessionStorage.setItem("end_date", document.getElementById("end_date").value);
+    });
+
+    // Restore filters when returning to the page
+    window.onload = function() {
+      if (sessionStorage.getItem("goal_type")) {
+        document.getElementById("goal_type").value = sessionStorage.getItem("goal_type");
+      }
+      if (sessionStorage.getItem("goal_status")) {
+        document.getElementById("goal_status").value = sessionStorage.getItem("goal_status");
+      }
+      if (sessionStorage.getItem("min_target")) {
+        document.getElementById("min_target").value = sessionStorage.getItem("min_target");
+      }
+      if (sessionStorage.getItem("max_target")) {
+        document.getElementById("max_target").value = sessionStorage.getItem("max_target");
+      }
+      if (sessionStorage.getItem("start_date")) {
+        document.getElementById("start_date").value = sessionStorage.getItem("start_date");
+      }
+      if (sessionStorage.getItem("end_date")) {
+        document.getElementById("end_date").value = sessionStorage.getItem("end_date");
+      }
+    };
+
+    // Clear filters function
+    function clearFilters() {
+      sessionStorage.clear();
+      document.getElementById("filterForm").reset();
+      document.getElementById("goal_type").value = "all";
+      document.getElementById("goal_status").value = "all";
+      document.getElementById("min_target").value = "";
+      document.getElementById("max_target").value = "";
+      document.getElementById("start_date").value = "";
+      document.getElementById("end_date").value = "";
+    }
+    console.log("Filters on load:", {
+  goal_type: sessionStorage.getItem("goal_type"),
+  goal_status: sessionStorage.getItem("goal_status"),
+  min_target: sessionStorage.getItem("min_target"),
+  max_target: sessionStorage.getItem("max_target"),
+  start_date: sessionStorage.getItem("start_date"),
+  end_date: sessionStorage.getItem("end_date")
+});
+
+  </script>
+</body>
+</html>
