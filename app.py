@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 import os
 import pandas as pd
 
+
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'Recipt_uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -956,6 +957,73 @@ def download_consolidated():
         f.write("\n")
 
     return send_file(file_path, as_attachment=True)
+
+@app.route('/scorecards')
+def scorecards():
+    # Get query parameters
+    user_id = request.args.get('user_id', default=2, type=int )  # Default to 2 for testing
+    month = request.args.get('month', default=pd.to_datetime('now').month, type=int)
+    year = request.args.get('year', default=pd.to_datetime('now').year, type=int)
+
+    # Monthly calculations
+    monthly_start_date = pd.to_datetime(f"{year}-{month}-01")
+    monthly_end_date = monthly_start_date + pd.offsets.MonthEnd(1)
+
+    budget_df = fetch_budgets(start_date=monthly_start_date, end_date=monthly_end_date, user_id=user_id)
+    monthly_budget = budget_df['limit'].sum() if not budget_df.empty else 0
+
+    # Fetch savings goals for monthly calculations
+    savings_goals_df = fetch_savings_goals(start_date=monthly_start_date, end_date=monthly_end_date, user_id=user_id)
+    monthly_savings = savings_goals_df['Achieved_amount'].sum() if not savings_goals_df.empty else 0
+    monthly_goals = savings_goals_df['Achieved_amount'].sum() if not savings_goals_df.empty else 0
+
+    # Fetch expenses for monthly calculations
+    monthly_expense_df = fetch_expenses(start_date=monthly_start_date, end_date=monthly_end_date, user_id=user_id)
+    monthly_expenses = monthly_expense_df['amount'].sum() if not monthly_expense_df.empty else 0
+
+    # Calculate monthly percentage
+    monthly_percentage = (monthly_savings / monthly_budget * 100) if monthly_budget > 0 else 0
+
+    # Yearly calculations
+    yearly_start_date = pd.to_datetime(f"{year}-01-01")
+    yearly_end_date = pd.to_datetime(f"{year}-12-31")
+
+
+    yearly_budget_df = fetch_budgets(start_date=yearly_start_date, end_date=yearly_end_date, user_id=user_id)
+    yearly_budget = yearly_budget_df['limit'].sum() if not yearly_budget_df.empty else 0
+
+
+    # Fetch savings goals for yearly calculations
+    yearly_savings_goals_df = fetch_savings_goals(start_date=yearly_start_date, end_date=yearly_end_date, user_id=user_id)
+    yearly_savings = yearly_savings_goals_df['Achieved_amount'].sum() if not yearly_savings_goals_df.empty else 0
+    yearly_goals = yearly_savings_goals_df['Target_amount'].sum() if not yearly_savings_goals_df.empty else 0
+
+    # Fetch expenses for yearly calculations
+    yearly_expense_df = fetch_expenses(start_date=yearly_start_date, end_date=yearly_end_date, user_id=user_id)
+    yearly_expenses = yearly_expense_df['amount'].sum() if not yearly_expense_df.empty else 0
+
+    # Calculate yearly percentage
+    overallscore=monthly_budget+monthly_expenses+monthly_savings
+    overall_yearly=yearly_expenses+yearly_savings+yearly_budget
+    yearly_percentage = (yearly_expenses / yearly_budget * 100) if yearly_budget > 0 else 0
+
+    # Get the current date
+    now = datetime.now()
+
+    return render_template('scorecards.html', 
+                           monthly_budget=monthly_budget, 
+                           monthly_savings=monthly_savings, 
+                           monthly_expenses=monthly_expenses,
+                           yearly_budget=yearly_budget, 
+                           yearly_savings=yearly_savings, 
+                           yearly_expenses=yearly_expenses,
+                           overallscore=overallscore,
+                           overall_yearly=overall_yearly,
+                           now=now,
+                           monthly_goals=monthly_goals,
+                           yearly_goals=yearly_goals,
+                           monthly_percentage=monthly_percentage,
+                           yearly_percentage=yearly_percentage)
 
 if __name__ == '__main__':
     app.run(debug=True)
