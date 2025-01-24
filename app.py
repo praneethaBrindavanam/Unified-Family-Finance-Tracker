@@ -712,8 +712,8 @@ def delete_expense(ExpenseID):
     
 @app.route('/savings_goals', methods=['GET', 'POST'])
 def savings_goals():
-    user_id = flask_session.get('user_id')
-    family_head_id = flask_session.get('family_head_id')
+    user_id = session.get('user_id')
+    family_head_id = session.get('family_head_id')
 
     if not user_id:
         flash("User not logged in.")
@@ -834,8 +834,8 @@ def savings_goals():
 
 @app.route("/add_amount/<int:id>", methods=["GET", "POST"])
 def add_amount(id):
-    user_id = flask_session.get("user_id")
-    family_head_id = flask_session.get("family_head_id")
+    user_id = session.get("user_id")
+    family_head_id = session.get("family_head_id")
 
     sql = text("""
         SELECT * FROM Savings_goals 
@@ -909,8 +909,8 @@ def add_amount(id):
 
 @app.route("/add_goal", methods=['GET', 'POST'])
 def add_goal():
-    family_head_id = flask_session.get('family_head_id')
-    user_id = flask_session.get('user_id')
+    family_head_id = session.get('family_head_id')
+    user_id = session.get('user_id')
 
     if request.method == "POST":
         target_amount = request.form['target_amount']
@@ -952,8 +952,8 @@ def add_goal():
 
 @app.route("/edit_goals/<id>", methods=['GET', 'POST'])
 def edit_goals(id):
-    user_id = flask_session.get('user_id')
-    family_head_id = flask_session.get('family_head_id')
+    user_id = session.get('user_id')
+    family_head_id = session.get('family_head_id')
 
     if not user_id:
         flash("User not authenticated.")
@@ -1025,8 +1025,8 @@ def edit_goals(id):
 
 @app.route("/delete_goal/<int:id>", methods=["POST", "GET"])
 def delete_goal(id):
-    user_id = flask_session.get("user_id")
-    family_head_id = flask_session.get("family_head_id")
+    user_id = session.get("user_id")
+    family_head_id = session.get("family_head_id")
 
     if not user_id:
         flash("User not authenticated.")
@@ -1076,8 +1076,8 @@ def delete_goal(id):
 
 @app.route('/family_goals_dashboard')
 def family_goals_dashboard():
-    user_id = flask_session.get('user_id')
-    family_head_id = flask_session.get('family_head_id')
+    user_id = session.get('user_id')
+    family_head_id = session.get('family_head_id')
 
     if not user_id:
         flash("User not logged in.")
@@ -1101,8 +1101,8 @@ def family_goals_dashboard():
 
 @app.route("/cancel_goal/<id>", methods=["POST"])
 def cancel_goal(id):
-    user_id = flask_session.get("user_id")
-    family_head_id = flask_session.get("family_head_id")
+    user_id = session.get("user_id")
+    family_head_id = session.get("family_head_id")
 
     if not user_id or not family_head_id:
         flash("User not logged in or family information unavailable.")
@@ -1134,8 +1134,8 @@ def cancel_goal(id):
 
 @app.route("/restart_goal/<int:id>", methods=["POST"])
 def restart_goal(id):
-    user_id = flask_session.get("user_id")
-    family_head_id = flask_session.get("family_head_id")
+    user_id = session.get("user_id")
+    family_head_id = session.get("family_head_id")
 
     if not user_id:
         flash("User not authenticated.")
@@ -1190,8 +1190,8 @@ def restart_goal(id):
 # Route for progress bar
 @app.route("/progress_bar/<int:id>", methods=["GET" , "POST"])
 def progress_bar(id):
-    user_id = flask_session.get("user_id")
-    family_head_id = flask_session.get("family_head_id")
+    user_id = session.get("user_id")
+    family_head_id = session.get("family_head_id")
     sql = text("""
         SELECT * FROM Savings_goals 
         WHERE goal_id = :goal_id AND (user_id = :user_id OR family_head_id = :family_head_id)
@@ -1258,7 +1258,7 @@ def filter_savings_goals():
 
 @app.route('/investments', methods=['GET'])
 def view_investments():
-    user_id = flask_session.get('user_id')
+    user_id = session.get('user_id')
     
     if not user_id:
         flash("User not logged in.")
@@ -1269,7 +1269,7 @@ def view_investments():
     return render_template('investments.html', investments=investments)
 @app.route('/add_investment', methods=['GET', 'POST'])
 def add_investment():
-    user_id = flask_session.get('user_id')
+    user_id = session.get('user_id')
 
     if not user_id:
         flash("User not logged in.")
@@ -1347,7 +1347,7 @@ def delete_investment(investment_id):
 
 @app.route('/calculate_returns/<int:investment_id>', methods=['GET', 'POST'])
 def calculate_returns(investment_id):
-    user_id = flask_session.get('user_id')
+    user_id = session.get('user_id')
 
     if not user_id:
         flash("User not logged in.")
@@ -1427,6 +1427,7 @@ def calculate_returns(investment_id):
                            dividend_yield=dividend_yield, capital_appreciation=capital_appreciation, 
                            expense_ratio=expense_ratio, nav_growth=nav_growth, rental_income=rental_income, 
                            property_appreciation=property_appreciation,roi=investment.roi)
+
 @app.route('/budgethome')
 def budgethome():
     return render_template('index.html')
