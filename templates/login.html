@@ -1,119 +1,128 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <title>Login</title>
-    <style>
-        /* General Styles */
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
+   <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Login</title>
+      <style>
+         /* Global Styles */
+         body {
+            font-family: 'Arial', sans-serif;
             margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom right, #6a11cb, #2575fc);
+            color: #fff;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-        }
+         }
 
-        h2 {
-            text-align: center;
-            color: #333;
-        }
-
-        /* Form Styles */
-        form {
-            background: #ffffff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            width: 300px;
-            text-align: center;
-        }
-
-        form input {
-            width: calc(100% - 20px);
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            box-sizing: border-box;
-            font-size: 14px;
-        }
-
-        form button {
+         .container {
+            background: rgba(255, 255, 255, 0.9);
+            max-width: 350px;
             width: 100%;
-            padding: 10px;
-            background-color: #0d0d88;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            color: #333;
+         }
+
+         h3 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            color: #333;
+         }
+
+         form {
+            display: flex;
+            flex-direction: column;
+         }
+
+         label {
+            font-weight: bold;
+            margin-bottom: 5px;
+         }
+
+         input {
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1rem;
+         }
+
+         input:focus {
+            border-color: #6a11cb;
+            outline: none;
+            box-shadow: 0 0 5px rgba(106, 17, 203, 0.5);
+         }
+
+         button {
+            background: #6a11cb;
+            color: #fff;
+            padding: 12px;
             border: none;
-            color: white;
-            font-size: 16px;
-            border-radius: 5px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
             cursor: pointer;
-            margin-top: 10px;
-        }
+            transition: background 0.3s ease;
+         }
 
-        form button:hover {
-            background-color: #0a0a70;
-        }
+         button:hover {
+            background: #4e0f92;
+         }
 
-        /* Link Styles */
-        form p {
-            font-size: 14px;
-            margin-top: 10px;
-            color: #555;
-        }
+         .create-account {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 0.9rem;
+         }
 
-        form p a {
-            color:  #0d0d88;
+         .create-account a {
+            color: #6a11cb;
+            font-weight: bold;
             text-decoration: none;
-        }
+         }
 
-        form p a:hover {
+         .create-account a:hover {
             text-decoration: underline;
-        }
+         }
 
-        .forgot-password {
-            margin-top: 15px; /* Adjusted margin to add space between login button and forgot password link */
-            font-size: 14px;
-        }
+         /* Mobile responsiveness */
+         @media (max-width: 480px) {
+            .container {
+               padding: 15px;
+            }
 
-        .forgot-password a {
-            color: #0d0d88;
-            text-decoration: none;
-        }
+            h3 {
+               font-size: 1.5rem;
+            }
 
-        .forgot-password a:hover {
-            text-decoration: underline;
-        }
-    </style>
-</head>
-
-<body>
-    
-    <form class="Login" id="loginForm" action="/login" method="post">
-        <h2>Login</h2>
-        <!-- Display flash messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        <ul>
-        {% for category, message in messages %}
-            <li class="{{ category }}">{{ message }}</li>
-        {% endfor %}
-        </ul>
-    {% endif %}
-    {% endwith %}
-    
-
-        <input type="email" name="email" placeholder="Email" required>
-        <input type="password" name="password" placeholder="Password" required>
-        <br>
-        <button type="submit">Login</button>
-        
-
-        <div class="forgot-password">
-            <a href="{{ url_for('forgot_password') }}">Forgot Password?</a>
-        </div>
-        <p>Don't have an account? <a href="{{ url_for('signup') }}">Sign Up</a></p>
-    </form>
-</body>
-
+            button {
+               font-size: 0.9rem;
+            }
+         }
+      </style>
+   </head>
+   <body>
+      <div class="container">
+         <h3>Login</h3>
+         <form action="/login" method="POST">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" placeholder="Enter your email" required>
+            
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" placeholder="Enter your password" required>
+            
+            
+            <button type="submit">Login</button>
+         </form>
+         <div class="create-account">
+            Don't have an account? <a href="/add">Create an Account</a>
+         </div>
+      </div>
+   </body>
 </html>
