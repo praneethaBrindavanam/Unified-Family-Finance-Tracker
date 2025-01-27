@@ -58,13 +58,11 @@ async function displayAlerts() {
     });
     const alerts = await response.json();
     console.log(alerts["alerts"]);
-
     for (const alert of alerts["alerts"]) {
       document.getElementById("blankmessage").style.display = "none";
-
-      // Create alert element
+      console.log(alert);
       const node = document.createElement("div");
-      node.id = `alert-${alert[0]}`; // Unique ID for the alert
+      node.id = `alert-${alert[0]}`;
       node.innerHTML = `
         <div class="alert ${alert[3] === 'Warning' ? 'alert-primary' : 'alert-danger'}" role="alert">
           <div class="hstack gap-3">
@@ -79,14 +77,29 @@ async function displayAlerts() {
           <div class="collapse" id="details-${alert[0]}">
             <div class="card card-body">
               <p>${alert[2]}</p>
+              <div id='expense_info${alert[0]}'>
+              </div>
               <button onclick="resolveAlert(${alert[0]})" class="btn btn-success">
                 <i class="fas fa-check-circle"></i> Mark As Resolved
               </button>
             </div>
           </div>              
         </div>`;
-      
       container.appendChild(node);
+      const expense_info=document.getElementById("expense_info"+alert[0]);
+      const expense_list=document.createElement('div');
+      for(expense of alert[6]){
+        const exp=document.createElement('div');
+        const amount=document.createElement('p');
+        amount.innerHTML='Amount:-'+expense[0];
+        const date=document.createElement('p');
+        date.innerHTML='Date:-'+expense[1];     
+        exp.appendChild(date);
+        exp.appendChild(amount);
+        expense_list.appendChild(exp);
+        expense_list.appendChild(document.createElement('br'))
+      }
+      expense_info.appendChild(expense_list);
     }
   } catch (error) {
     console.error("Error fetching alerts:", error);
@@ -118,9 +131,18 @@ async function getPercentage() {
       if (!bar) {
           throw new Error("Progress bar element not found in DOM.");
       }
+      if(percentage>100){
+        bar.style.width = 100 + "%";
+        bar.innerText = `100% limit exhausted`;
+        bar.setAttribute("aria-valuenow", 100);
+        bar.classList.add("bg-danger");
+      }
+      else{
       bar.style.width = validPercentage + "%";
       bar.innerText = `${validPercentage.toFixed(2)}% limit exhausted`;
       bar.setAttribute("aria-valuenow", validPercentage);
+      bar.classList.add('bg-info')
+      }
   } catch (error) {
       console.error("Error fetching budget percentage:", error);
 
