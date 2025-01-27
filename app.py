@@ -24,26 +24,16 @@ app.config['UPLOAD_FOLDER'] = 'Recipt_uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # SQLAlchemy Setup
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost/recent'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost/unified_family'
 
 #change the password and databasename as per your system
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = secrets.token_hex(16)
-DATABASE_URI = 'mysql+pymysql://root:root@localhost/recent'
+DATABASE_URI = 'mysql+pymysql://root:root@localhost/unified_family'
 engine = create_engine(DATABASE_URI)
 metadata = MetaData()
 
 db = SQLAlchemy(app)
-
-
-class Profile(db.Model):
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    username = db.Column(db.String(50), unique=True, nullable=False)
-    email = db.Column(db.String(100), unique=True, nullable=False)
-    fam_name = db.Column(db.String(50), nullable=False)
-    role = db.Column(db.String(50), nullable=False)
-    fam_code = db.Column(db.String(50), nullable=False)
-    password = db.Column(db.String(255), nullable=False) 
 
 
 class Budget(db.Model):
@@ -147,21 +137,6 @@ class SavingsGoal(db.Model):
     Goal_type = db.Column(db.Enum('Personal', 'Family'), default='Personal')
     User_id = db.Column(db.String(100), nullable=True)
     family_head_id = db.Column(db.String(100), nullable=True)
-    priority = db.Column(db.Integer, nullable=False)
-
-class Investments(db.Model):
-    _tablename_ = 'investments'
-    investment_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    User_id = db.Column(db.String(100), nullable=True)
-    investment_type = db.Column(db.String(50), nullable=False)
-    investment_name = db.Column(db.String(255), nullable=False)
-    purchase_date = db.Column(db.Date, nullable=False)
-    purchase_price = db.Column(db.DECIMAL(15, 2), nullable=False)
-    quantity = db.Column(db.Integer, nullable=False)
-    roi = db.Column(db.DECIMAL(5, 2),nullable=True)
-    info = db.Column(db.Text,nullable=True)
-    current_value = db.Column(db.DECIMAL(15, 2),nullable=True)
-    end_date = db.Column(db.Date,nullable=True)
 
 metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
@@ -222,83 +197,49 @@ def user_login(email, password):
 def home():
     return render_template('home.html')
 
-@app.route('/add', methods=["POST"])
-def add_profile():
-    """Handle form submission to add a new profile."""
-    id=request.form.get("id")
-    username = request.form.get("username")
-    email = request.form.get("email")
-    fam_name = request.form.get("fam_name")
-    role = request.form.get("role")
-    fam_code = request.form.get("fam_code")
-    password=request.form.get("password")
-
-    # Validation: Ensure all fields are filled
-    if not all([username, email, fam_name, role, fam_code]):
-        return "All fields are required!", 400
-
-    # Create a new profile
-    new_profile = Profile(
-        id=id,
-        username=username,
-        email=email,
-        fam_name=fam_name,
-        role=role,
-        fam_code=fam_code,
-        password=password
-    )
-
-    try:
-        db.session.add(new_profile)
-        db.session.commit()
-        return redirect('/index.html')
-    except Exception as e:
-        db.session.rollback()
-        return f"An error occurred: {e}", 500
-
-@app.route('/delete/<int:id>')
-def delete_profile(id):
-    """Delete a profile by ID."""
-    profile = Profile.query.get(id)
-    if not profile:
-        return "Profile not found!", 404
-
-    try:
-        db.session.delete(profile)
-        db.session.commit()
-        return redirect('/')
-    except Exception as e:
-        db.session.rollback()
-        return f"An error occurred: {e}", 500
-    
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    if request.method == 'POST':
+        try:
+            # Get form data (ensure you have the correct field names)
+            name = request.json.get('name')
+            email = request.json.get('email')
+            password = request.json.get('password')
+            phone_number = request.json.get('phone')
+            role = request.json.get('role', 'users')  # Default to 'user'
+            print(f"Received: Name={name}, Email={email}, Role={role}")
+            if name and email and password:
+                # Call the function to add user to database
+                if add_user_with_verification(name, email, password, phone_number, role):
+                    return {"success": True, "message": "Signup successful!"}, 200
+                else:
+                    return {"success": False, "message": "Database error."}, 400
+            else:
+                return {"success": False, "message": "All fields are required."}, 400
+        except Exception as e:
+            print(f"Error in signup: {e}")
+            return {"success": False, "message": "An error occurred."}, 500
+    return render_template('signup.html')
 
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        # Extract form data
         email = request.form.get('email')
         password = request.form.get('password')
+        user = Users.query.filter_by(email=email).first()
 
-        # Fetch the user from the database
-        user = Profile.query.filter_by(email=email).first()
+        user_id = user_login(email, password)
+        user = Users.query.filter_by(email=email).first()
 
-        if user and user.password == password:  # Replace with hash comparison in production
-            # Login successful: Set session variables
-            session['email'] = user.email
-            session['password'] = user.password
-            flash("Login successful!", "success")
-            # Redirect to home or dashboard
-            return render_template('dashboard.html')
+        if user_id:  # If user_id is returned, login is successful
+            flask_session['user_id'] =user.user_id  # Store user_id in session
+            flask_session['role']=user.role
+            flask_session['family_head_id'] = user.family_head_id
+            return redirect(url_for('navigationbar'))
         else:
-            # Show an error message
-            flash("Invalid email or password. Please try again.", "danger")
-            return render_template('login.html')
-
-    # Render the login.html page on GET request
+            flash("Invalid email or password.", "danger")
     return render_template('login.html')
-
-
 
 @app.route('/navigationbar')
 def navigationbar():
@@ -709,14 +650,46 @@ def delete_expense(ExpenseID):
         flash(f"Error deleting expense: {str(e)}", 'danger')
         return redirect(url_for('show_expenses'))
     
+@app.route("/cancel_goal/<string:id>", methods=["POST"])
+def cancel_goal(id):
+    user_id = flask_session.get("user_id")
+    family_head_id = flask_session.get("family_head_id")
+
+    if not user_id or not family_head_id:
+        flash("User not logged in or family information unavailable.")
+        return redirect(url_for("login"))
+
+    # Check if goal exists and belongs to the user or family
+    sql_check = text("""
+        SELECT * FROM Savings_goals 
+        WHERE Goal_id = :goal_id AND (User_id = :user_id OR family_head_id = :family_head_id)""")
+    goal = db.session.execute(sql_check, {"goal_id": id, "user_id": user_id, "family_head_id": family_head_id}).fetchone()
+
+    if not goal:
+        flash("Goal not found or access denied.")
+        return redirect(url_for("savings_goals"))
+
+    # Update goal status to "Cancelled"
+    sql_update = text("""
+        UPDATE Savings_goals 
+        SET Goal_status = 'Cancelled' 
+        WHERE Goal_id = :goal_id AND (User_id = :user_id OR family_head_id = :family_head_id)
+    """
+    )
+    db.session.execute(sql_update, {"goal_id": id, "user_id": user_id, "family_head_id": family_head_id})
+    db.session.commit()
+
+    flash("Goal cancelled successfully!")
+    return redirect(url_for("savings_goals"))
     
+
 @app.route('/savings_goals', methods=['GET', 'POST'])
 def savings_goals():
-    user_id = session.get('user_id')
-    family_head_id = session.get('family_head_id')
+    user_id = flask_session.get('user_id')
+    family_head_id = flask_session.get('family_head_id')
 
-    if not user_id:
-        flash("User not logged in.")
+    if not user_id or not family_head_id:
+        flash("User not logged in or family information unavailable.")
         return redirect(url_for('login'))
 
     # Update expired goals
@@ -729,113 +702,49 @@ def savings_goals():
     db.session.execute(sql_update)
     db.session.commit()
 
-    # Get min and max target values from the database
-    max_target_query = text("SELECT MAX(Target_amount) FROM Savings_goals WHERE Target_amount IS NOT NULL")
-    min_target_query = text("SELECT MIN(Target_amount) FROM Savings_goals WHERE Target_amount IS NOT NULL")
-    db_max_target = db.session.execute(max_target_query).scalar() or 100000  # Default to 100,000 if None
-    db_min_target = db.session.execute(min_target_query).scalar() or 0       # Default to 0 if None
+    # Filters and search
+    status_filter = request.args.get('status', 'all')
+    search_query = request.form.get('search_query', '').strip()
 
-    # Retrieve filter parameters from the request
-    goal_type = request.args.get('goal_type', 'all')
-    goal_status = request.args.get('goal_status', 'all')
-    min_target = request.args.get('min_target', db_min_target)
-    max_target = request.args.get('max_target', db_max_target)
-    start_date = request.args.get('start_date', None)
-    end_date = request.args.get('end_date', None)
-    search_query = request.args.get('search_query', '').strip()
-
-    # Sorting
-    sort_by = request.args.get('sort_by', 'priority')
-    sort_order = request.args.get('sort_order', 'desc')
-    valid_sort_columns = ['goal_id', 'priority', 'start_date', 'end_date', 'target_amount', 'Achieved_amount']
-
-    # Validate sorting columns and order
-    if sort_by not in valid_sort_columns:
-        sort_by = 'priority'
-    if sort_order not in ['asc', 'desc']:
-        sort_order = 'desc'
-
-    
-    # Ensure min_target and max_target are integers and fall back to defaults if invalid
-    try:
-        min_target = int(min_target)
-    except (ValueError, TypeError):
-        min_target = db_min_target
-
-    try:
-        max_target = int(max_target)
-    except (ValueError, TypeError):
-        max_target = db_max_target
-
-    # Sanitize search query
-    if search_query:
-        search_query = re.sub(r"[^a-zA-Z0-9\s]", "", search_query)  # Remove special characters
-        search_query = f"%{search_query}%"  # Add wildcard for SQL LIKE
-
-    # Build SQL query with filters
+    # Build query dynamically
     base_query = """
-        SELECT * FROM Savings_goals
-        WHERE ((Goal_type = 'Personal' AND User_id = :user_id)
-            OR (Goal_type = 'Family' AND (Family_head_id = :family_head_id OR Family_head_id IS NULL)))
+        SELECT * 
+        FROM Savings_goals
+        WHERE 
+            ((Goal_type = 'Personal' AND User_id = :user_id)
+            OR
+            (Goal_type = 'Family' AND Family_head_id = :family_head_id))
     """
-    query_params = {"user_id": user_id, "family_head_id": family_head_id}
 
-    if goal_type != "all":
-        base_query += " AND Goal_type = :goal_type"
-        query_params["goal_type"] = goal_type
-
-    if goal_status != "all":
-        base_query += " AND Goal_status = :goal_status"
-        query_params["goal_status"] = goal_status
-
-    
-
-    # Add range filter for target amount
-    base_query += " AND Target_amount BETWEEN :min_target AND :max_target"
-    query_params["min_target"] = min_target
-    query_params["max_target"] = max_target
-
-    if start_date:
-        base_query += " AND Start_date >= :start_date"
-        query_params["start_date"] = start_date
-
-    if end_date:
-        base_query += " AND End_date <= :end_date"
-        query_params["end_date"] = end_date
+    if status_filter != 'all':
+        base_query += " AND Goal_status = :status_filter"
 
     if search_query:
         base_query += " AND Goal_description LIKE :search_query"
-        query_params["search_query"] = search_query
-
-    base_query += f" ORDER BY {sort_by} {sort_order}"
-
-    
 
     sql = text(base_query)
-    savings_goals = db.session.execute(sql, query_params).fetchall()
+
+    query_params = {
+        "user_id": user_id,
+        "family_head_id": family_head_id,
+        "status_filter": status_filter if status_filter != 'all' else None,
+        "search_query": f"%{search_query}%" if search_query else None
+    }
+
+    savings_goals = db.session.execute(sql, {k: v for k, v in query_params.items() if v is not None}).fetchall()
 
     return render_template(
         "savings_goals.html",
         datas=savings_goals,
-        goal_type=goal_type,
-        goal_status=goal_status,
-        min_target=min_target,
-        max_target=max_target,
-        start_date=start_date,
-        end_date=end_date,
-        search_query=search_query,
-        db_min=db_min_target,
-        db_max=db_max_target,
-        sort_by=sort_by,
-        sort_order=sort_order,
+        status_filter=status_filter,
+        search_query=search_query
     )
 
 
-
-@app.route("/add_amount/<int:id>", methods=["GET", "POST"])
+@app.route("/add_amount/<string:id>", methods=["GET", "POST"])
 def add_amount(id):
-    user_id = session.get("user_id")
-    family_head_id = session.get("family_head_id")
+    user_id = flask_session.get("user_id")
+    family_head_id = flask_session.get("family_head_id")
 
     sql = text("""
         SELECT * FROM Savings_goals 
@@ -856,19 +765,7 @@ def add_amount(id):
     if request.method == "POST":
         additional_amount = float(request.form["additional_amount"])
 
-        # Insert or Update the contribution in the contributions table
-        contribution_sql = text("""
-            INSERT INTO contributions (user_id, goal_id, contribution_amount)
-            VALUES (:user_id, :goal_id, :contribution_amount)
-            ON DUPLICATE KEY UPDATE contribution_amount = contribution_amount + :contribution_amount
-        """)
-        db.session.execute(contribution_sql, {
-            "user_id": user_id,
-            "goal_id": id,
-            "contribution_amount": additional_amount
-        })
-
-        # Update achieved_amount in the Savings_goals table
+        # Update achieved_amount
         update_sql = text("""
             UPDATE Savings_goals 
             SET Achieved_amount = COALESCE(Achieved_amount, 0) + :amount
@@ -881,19 +778,12 @@ def add_amount(id):
             "family_head_id": family_head_id
         })
 
-        # Retrieve updated goal data to check if the goal is now "Achieved"
+        # Update goal status
         goal = db.session.execute(sql, {"goal_id": id, "user_id": user_id, "family_head_id": family_head_id}).fetchone()
         achieved_amount = goal._mapping["Achieved_amount"]
         target_amount = goal._mapping["Target_amount"]
 
-        # Update goal status based on achieved amount
-        if achieved_amount >= target_amount:
-            status = "Achieved"
-        elif goal_status == "Cancelled":
-            status = "Cancelled"
-        else:
-            status = "Active"
-
+        status = "Achieved" if achieved_amount >= target_amount else "Active"
         status_sql = text("""
             UPDATE Savings_goals 
             SET Goal_status = :status
@@ -907,10 +797,12 @@ def add_amount(id):
 
     return render_template("add_amount.html", data=goal)
 
-@app.route("/add_goal", methods=['GET', 'POST'])
-def add_goal():
-    family_head_id = session.get('family_head_id')
-    user_id = session.get('user_id')
+
+
+@app.route("/addgoal", methods=['GET', 'POST'])
+def add_Goal():
+    family_head_id = flask_session.get('family_head_id')
+    user_id = flask_session.get('user_id')
 
     if request.method == "POST":
         target_amount = request.form['target_amount']
@@ -918,7 +810,6 @@ def add_goal():
         end_date_str = request.form['end_date']
         goal_description = request.form['goal_description']
         goal_type = request.form['goal_type']
-        priority = int(request.form.get('priority', 0))  # Default priority to 0 if not provided
 
         start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
         end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
@@ -928,8 +819,8 @@ def add_goal():
 
         sql = text("""
             INSERT INTO Savings_goals 
-            (User_id, family_head_id, Target_amount, start_date, end_date, Goal_description, Goal_type, Goal_status, priority)
-            VALUES (:user_id, :family_head_id, :target_amount, :start_date, :end_date, :goal_description, :goal_type, :goal_status, :priority)
+            (User_id, family_head_id, Target_amount, start_date, end_date, Goal_description, Goal_type, Goal_status)
+            VALUES (:user_id, :family_head_id, :target_amount, :start_date, :end_date, :goal_description, :goal_type, :goal_status)
         """)
         db.session.execute(sql, {
             "user_id": user_id,
@@ -939,8 +830,7 @@ def add_goal():
             "end_date": end_date,
             "goal_description": goal_description,
             "goal_type": goal_type,
-            "goal_status": goal_status,
-            "priority": priority
+            "goal_status": goal_status
         })
         db.session.commit()
 
@@ -950,14 +840,9 @@ def add_goal():
     return render_template("addgoals.html")
 
 
-@app.route("/edit_goals/<id>", methods=['GET', 'POST'])
-def edit_goals(id):
-    user_id = session.get('user_id')
-    family_head_id = session.get('family_head_id')
-
-    if not user_id:
-        flash("User not authenticated.")
-        return redirect(url_for("login"))
+@app.route("/edit_Goals/<string:id>", methods=['GET', 'POST'])
+def edit_Goals(id):
+    user_id = flask_session.get('user_id')
 
     if request.method == 'POST':
         target_amount = request.form['target_amount']
@@ -966,16 +851,14 @@ def edit_goals(id):
         goal_description = request.form['goal_description']
         goal_type = request.form['goal_type']
         achieved_amount = request.form.get('Achieved_amount', 0)
-        priority = int(request.form.get('priority', 0))  # Get priority from form
 
-        # Update goal details
-        sql_update = text("""
-            UPDATE Savings_goals
+        sql = text("""
+            UPDATE Savings_goals 
             SET Target_amount = :target_amount, start_date = :start_date, end_date = :end_date, 
-                Goal_description = :goal_description, Goal_type = :goal_type, Achieved_amount = :achieved_amount, priority = :priority
-            WHERE Goal_id = :goal_id AND (User_id = :user_id OR family_head_id = :family_head_id)
+                Goal_description = :goal_description, Goal_type = :goal_type, Achieved_amount = :achieved_amount
+            WHERE Goal_id = :goal_id AND User_id = :user_id
         """)
-        db.session.execute(sql_update, {
+        db.session.execute(sql, {
             "target_amount": target_amount,
             "start_date": start_date,
             "end_date": end_date,
@@ -983,172 +866,49 @@ def edit_goals(id):
             "goal_type": goal_type,
             "achieved_amount": achieved_amount,
             "goal_id": id,
-            "user_id": user_id,
-            "family_head_id": family_head_id,
-            "priority": priority
+            "user_id": user_id
         })
-
-        # Insert or Update the contribution in the contributions table
-        contribution_sql = text("""
-            INSERT INTO contributions (user_id, goal_id, contribution_amount)
-            VALUES (:user_id, :goal_id, :contribution_amount)
-            ON DUPLICATE KEY UPDATE contribution_amount = :contribution_amount
-        """)
-        db.session.execute(contribution_sql, {
-            "user_id": user_id,
-            "goal_id": id,
-            "contribution_amount": achieved_amount  # Assuming you're modifying the achieved_amount
-        })
-
-        # Update goal status based on achieved amount
-        status = 'Achieved' if float(achieved_amount) >= float(target_amount) else 'Active'
-        sql_status_update = text("""
-            UPDATE Savings_goals
-            SET goal_status = :status
-            WHERE Goal_id = :goal_id AND (User_id = :user_id OR family_head_id = :family_head_id)
-        """)
-        db.session.execute(sql_status_update, {"status": status, "goal_id": id, "user_id": user_id, "family_head_id": family_head_id})
         db.session.commit()
+
         flash("Goal Updated Successfully")
         return redirect(url_for("savings_goals"))
 
-    sql_fetch_goal = text("SELECT * FROM Savings_goals WHERE Goal_id = :goal_id")
-    goal = db.session.execute(sql_fetch_goal, {"goal_id": id}).fetchone()
+    sql = text("SELECT * FROM Savings_goals WHERE Goal_id = :goal_id")
+    goal = db.session.execute(sql, {"goal_id": id}).fetchone()
 
-    if not goal:
-        flash("Goal not found!")
-        return redirect(url_for("savings_goals"))
-    
-    return render_template("editgoals.html", datas=goal._mapping)
+    return render_template("editgoals.html", datas=goal)
 
 
+@app.route("/delete_Goals/<string:id>", methods=['POST' , 'GET'])
+def delete_Goals(id):
+    user_id = flask_session.get('user_id')
 
-@app.route("/delete_goal/<int:id>", methods=["POST", "GET"])
-def delete_goal(id):
-    user_id = session.get("user_id")
-    family_head_id = session.get("family_head_id")
+    sql = text("DELETE FROM Savings_goals WHERE Goal_id = :goal_id AND User_id = :user_id")
+    db.session.execute(sql, {"goal_id": id, "user_id": user_id})
+    db.session.commit()
 
-    if not user_id:
-        flash("User not authenticated.")
-        return redirect(url_for("login"))
-
-    sql_goal_check = text("""
-        SELECT Goal_type, Family_head_id, user_id FROM Savings_goals WHERE Goal_id = :goal_id
-    """)
-    goal_data = db.session.execute(sql_goal_check, {"goal_id": id}).mappings().first()
-
-    if not goal_data:
-        flash("Goal not found.")
-        return redirect(url_for("savings_goals"))
-
-    goal_type = goal_data.Goal_type 
-    goal_owner_id = goal_data.user_id  
-    goal_family_head_id = goal_data.Family_head_id  
-    if goal_type == "Personal":
-        if goal_owner_id != user_id:
-            flash("You can only delete your own personal goals.")
-            return redirect(url_for("savings_goals"))
-    
-    elif goal_type == "Family":
-        if goal_owner_id != user_id and goal_family_head_id != family_head_id:
-            flash("Only the family head or the goal owner can delete this goal.")
-            return redirect(url_for("savings_goals"))
-
-    try:
-        sql_delete_contributions = text("DELETE FROM Contributions WHERE goal_id = :goal_id")
-        db.session.execute(sql_delete_contributions, {"goal_id": id})
-
-        sql_delete_goal = text("DELETE FROM Savings_goals WHERE Goal_id = :goal_id")
-        db.session.execute(sql_delete_goal, {"goal_id": id})
-
-        db.session.commit()
-
-        flash("Goal and its related contributions deleted successfully.")
-    except Exception as e:
-        db.session.rollback()
-        flash(f"Error deleting goal: {e}")
-
+    flash('Goal Deleted Successfully')
     return redirect(url_for("savings_goals"))
 
 
 
-
-
-@app.route('/family_goals_dashboard')
-def family_goals_dashboard():
-    user_id = session.get('user_id')
-    family_head_id = session.get('family_head_id')
-
-    if not user_id:
-        flash("User not logged in.")
-        return redirect(url_for('login'))
-
-    # Query to get each family member's total contribution to family goals
-    contributions_query = text("""
-        SELECT u.name, COALESCE(SUM(c.contribution_amount), 0) AS total_contribution
-        FROM users u
-        LEFT JOIN contributions c ON u.user_id = c.user_id
-        INNER JOIN savings_goals g ON c.goal_id = g.goal_id
-        WHERE g.goal_type = 'Family' AND g.family_head_id = :family_head_id
-        GROUP BY u.name
-        ORDER BY total_contribution DESC;
-    """)
-
-    family_contributions = db.session.execute(contributions_query, {"family_head_id": family_head_id}).fetchall()
-
-    return render_template("family_dashboard.html", family_contributions=family_contributions)
-
-
-@app.route("/cancel_goal/<id>", methods=["POST"])
-def cancel_goal(id):
-    user_id = session.get("user_id")
-    family_head_id = session.get("family_head_id")
+@app.route("/restart_goal/<int:goal_id>", methods=["POST"])
+def restart_goal(goal_id):
+    user_id = flask_session.get("user_id")
+    family_head_id = flask_session.get("family_head_id")
 
     if not user_id or not family_head_id:
         flash("User not logged in or family information unavailable.")
-        return redirect(url_for("login"))
-
-    # Check if goal exists and belongs to the user or family
-    sql_check = text("""
-        SELECT * FROM Savings_goals 
-        WHERE Goal_id = :goal_id AND (User_id = :user_id OR family_head_id = :family_head_id)
-    """)
-    goal = db.session.execute(sql_check, {"goal_id": id, "user_id": user_id, "family_head_id": family_head_id}).fetchone()
-
-    if not goal:
-        flash("Goal not found or access denied.")
-        return redirect(url_for("savings_goals"))
-
-    # Update goal status to "Cancelled"
-    sql_update = text("""
-        UPDATE Savings_goals 
-        SET Goal_status = 'Cancelled' 
-        WHERE Goal_id = :goal_id AND (User_id = :user_id OR family_head_id = :family_head_id)
-    """)
-    db.session.execute(sql_update, {"goal_id": id, "user_id": user_id, "family_head_id": family_head_id})
-    db.session.commit()
-
-    flash("Goal cancelled successfully!")
-    return redirect(url_for("savings_goals"))
-
-
-@app.route("/restart_goal/<int:id>", methods=["POST"])
-def restart_goal(id):
-    user_id = session.get("user_id")
-    family_head_id = session.get("family_head_id")
-
-    if not user_id:
-        flash("User not authenticated.")
         return redirect(url_for("login"))
 
     # Fetch the current goal's start_date and end_date
     sql_fetch = text("""
         SELECT start_date, end_date 
         FROM Savings_goals
-        WHERE goal_id = :goal_id AND (user_id = :user_id OR family_head_id = :family_head_id)
+        WHERE Goal_id = :goal_id AND (User_id = :user_id OR family_head_id = :family_head_id)
     """)
     goal = db.session.execute(sql_fetch, {
-        "goal_id": id,
+        "goal_id": goal_id,
         "user_id": user_id,
         "family_head_id": family_head_id
     }).fetchone()
@@ -1157,26 +917,25 @@ def restart_goal(id):
         flash("Goal not found.")
         return redirect(url_for("savings_goals"))
 
-    # Extract start and end dates
-    goal_data = goal._mapping
-    original_start_date = goal_data["start_date"]
-    original_end_date = goal_data["end_date"]
+    # Calculate the duration of the goal
+    original_start_date = goal._mapping["start_date"]
+    original_end_date = goal._mapping["end_date"]
     goal_duration = (original_end_date - original_start_date).days
 
-    # Calculate new start and end dates
+    # Set the new start_date to today and calculate the new end_date
     new_start_date = datetime.now().date()
     new_end_date = new_start_date + timedelta(days=goal_duration)
 
-    # Update the goal: reset achieved amount, set status to 'Active', and update dates
+    # Update the goal: reset achieved amount, set status to 'Active', and update start_date and end_date
     sql_update = text("""
         UPDATE Savings_goals 
-        SET achieved_amount = 0, goal_status = 'Active', start_date = :new_start_date, end_date = :new_end_date
-        WHERE goal_id = :goal_id AND (user_id = :user_id OR family_head_id = :family_head_id)
+        SET Achieved_amount = 0, Goal_status = 'Active', start_date = :new_start_date, end_date = :new_end_date
+        WHERE Goal_id = :goal_id AND (User_id = :user_id OR family_head_id = :family_head_id)
     """)
     db.session.execute(sql_update, {
         "new_start_date": new_start_date,
         "new_end_date": new_end_date,
-        "goal_id": id,
+        "goal_id": goal_id,
         "user_id": user_id,
         "family_head_id": family_head_id
     })
@@ -1185,13 +944,12 @@ def restart_goal(id):
     flash("Goal restarted successfully with updated start and end dates!")
     return redirect(url_for("savings_goals"))
 
-
-
-# Route for progress bar
-@app.route("/progress_bar/<int:id>", methods=["GET" , "POST"])
+@app.route("/progress_bar/<string:id>", methods=["GET"])
 def progress_bar(id):
-    user_id = session.get("user_id")
-    family_head_id = session.get("family_head_id")
+    user_id = flask_session.get("user_id")
+    family_head_id = flask_session.get("family_head_id")
+
+    # Fetch goal details
     sql = text("""
         SELECT * FROM Savings_goals 
         WHERE goal_id = :goal_id AND (user_id = :user_id OR family_head_id = :family_head_id)
@@ -1201,232 +959,17 @@ def progress_bar(id):
     if not goal:
         flash("Goal not found")
         return redirect(url_for("savings_goals"))
-        
-    achieved_amount = goal._mapping["Achieved_amount"] or 0
+
+    # Calculate progress percentage with rounding
+    achieved_amount = goal._mapping["Achieved_amount"]
     target_amount = goal._mapping["Target_amount"]
     progress_percentage = round((achieved_amount / target_amount) * 100, 2) if target_amount > 0 else 0
-
-    motivational_message = get_motivational_message(progress_percentage)
-    
-    progress_bar_color = get_progress_bar_color(progress_percentage)
 
     return render_template(
         "progressbar.html",
         goal=goal,
-        progress_percentage=progress_percentage,
-        motivational_message=motivational_message,
-        progress_bar_color=progress_bar_color
+        progress_percentage=progress_percentage
     )
-    
-#function for motivational message
-def get_motivational_message(progress_percentage):
-    """
-    Returns a motivational message based on progress percentage.
-    """
-    if progress_percentage == 0:
-        return "Every journey starts with a single step. Begin today!"
-    elif progress_percentage < 25:
-        return "Great start! Keep pushing forward!"
-    elif progress_percentage < 50:
-        return "You're making progress! Keep the momentum going!"
-    elif progress_percentage < 75:
-        return "You're more than halfway there. Keep it up!"
-    elif progress_percentage < 100:
-        return "So close to the finish line! Don't stop now!"
-    elif progress_percentage == 100:
-        return "Congratulations! You've achieved your goal!"
-    else:
-        return "Keep striving for greatness!"
-
-def get_progress_bar_color(progress_percentage):
-    """
-    Returns the appropriate color for the progress bar based on the progress percentage.
-    """
-    if progress_percentage == 100:
-        return "green"
-    elif progress_percentage >= 75:
-        return "blue"
-    elif progress_percentage >= 50:
-        return "orange"
-    elif progress_percentage >= 25:
-        return "purple"
-    else:
-        return "red"
-@app.route('/filter_savings_goals')
-def filter_savings_goals():
-    return render_template('filter_savings_goals.html')
-
-@app.route('/investments', methods=['GET'])
-def view_investments():
-    user_id = session.get('user_id')
-    
-    if not user_id:
-        flash("User not logged in.")
-        return redirect(url_for('login'))
-    
-    investments = Investments.query.filter_by(User_id=user_id).all()
-    
-    return render_template('investments.html', investments=investments)
-@app.route('/add_investment', methods=['GET', 'POST'])
-def add_investment():
-    user_id = session.get('user_id')
-
-    if not user_id:
-        flash("User not logged in.")
-        return redirect(url_for('login'))
-
-    if request.method == 'POST':
-        investment_type = request.form['investment_type']
-        investment_name = request.form['investment_name']
-        purchase_date = request.form['purchase_date']
-        purchase_price = request.form['purchase_price']
-        quantity = request.form['quantity']
-        roi = request.form.get('roi') or None
-        info = request.form.get('info') or None
-        current_value = request.form.get('current_value') or None
-        end_date = request.form.get('end_date') or None
-
-        new_investment = Investments(
-            User_id=user_id,
-            investment_type=investment_type,
-            investment_name=investment_name,
-            purchase_date=datetime.strptime(purchase_date, '%Y-%m-%d').date(),
-            purchase_price=purchase_price,
-            quantity=quantity,
-            roi=roi,
-            info=info,
-            current_value=current_value,
-            end_date=end_date and datetime.strptime(end_date, '%Y-%m-%d').date()
-        )
-
-        db.session.add(new_investment)
-        db.session.commit()
-
-        flash("Investment added successfully!", "success")
-        return redirect(url_for('view_investments'))
-
-    return render_template('add_investment.html')
-
-@app.route('/edit_investment/<int:investment_id>', methods=['GET', 'POST'])
-def edit_investment(investment_id):
-    investment = Investments.query.get_or_404(investment_id)
-
-    if request.method == 'POST':
-        
-        investment.investment_name = request.form['investment_name']
-        investment.investment_type = request.form['investment_type']
-        investment.purchase_date = datetime.strptime(request.form['purchase_date'], '%Y-%m-%d').date()
-        investment.purchase_price = request.form['purchase_price']
-        investment.quantity = request.form.get('quantity') or 1
-        investment.roi = request.form.get('roi') or None
-        investment.current_value = request.form.get('current_value') or None
-        investment.end_date = datetime.strptime(request.form['end_date'], '%Y-%m-%d').date() if request.form.get('end_date') else None
-        investment.info = request.form.get('info') or None 
-        
-        db.session.commit()
-        flash("Investment updated successfully!", "success")
-        return redirect(url_for('view_investments'))
-
-    return render_template('edit_investment.html', investment=investment)
-
-@app.route('/delete_investment/<int:investment_id>', methods=['POST'])
-def delete_investment(investment_id):
-    
-    investment = Investments.query.get_or_404(investment_id)
-
-    try:
-        
-        db.session.delete(investment)
-        db.session.commit()
-        flash('Investment deleted successfully!', 'success')
-    except Exception as e:
-        db.session.rollback()
-        flash('Error deleting investment: ' + str(e), 'danger')
-
-    return redirect(url_for('view_investments'))
-
-@app.route('/calculate_returns/<int:investment_id>', methods=['GET', 'POST'])
-def calculate_returns(investment_id):
-    user_id = session.get('user_id')
-
-    if not user_id:
-        flash("User not logged in.")
-        return redirect(url_for('login'))
-
-    investment = Investments.query.filter_by(investment_id=investment_id, User_id=user_id).first()
-
-    if not investment:
-        flash("Investment not found.")
-        return redirect(url_for('show_investments'))
-
-    results = []
-
-    interest_rate = 0
-    face_value = 0
-    accrued_interest = 0
-    dividend_yield = 0
-    capital_appreciation = 0
-    expense_ratio = 0
-    nav_growth = 0
-    rental_income = 0
-    property_appreciation = 0
-
-    if request.method == 'POST':
-        investment_type = investment.investment_type
-        purchase_value = investment.purchase_price
-        current_value = investment.current_value
-        
-
-        interest_rate = Decimal(request.form.get("interest_rate", 0))
-        face_value = Decimal(request.form.get("face_value", 0))
-        accrued_interest = Decimal(request.form.get("accrued_interest", 0))
-        dividend_yield = Decimal(request.form.get("dividend_yield", 0))
-        capital_appreciation = Decimal(request.form.get("capital_appreciation", 0))
-        expense_ratio = Decimal(request.form.get("expense_ratio", 0))
-        nav_growth = Decimal(request.form.get("nav_growth", 0))
-        rental_income = Decimal(request.form.get("rental_income", 0))
-        property_appreciation = Decimal(request.form.get("property_appreciation", 0))
-        
-        if investment_type == 'fixed_deposit':
-            returns = purchase_value * ((1 + interest_rate / 100) ** 1) - purchase_value
-        elif investment_type == 'stocks':
-            returns = (purchase_value * (dividend_yield / 100)) + (current_value - purchase_value)
-        elif investment_type == 'mutual_funds':
-            returns = current_value * (1 + nav_growth / 100) - purchase_value
-        elif investment_type == 'bonds':
-            returns = (face_value + accrued_interest) - purchase_value
-        elif investment_type == 'real_estate':
-            returns = (rental_income + property_appreciation)
-        elif investment_type == 'savings_account':
-            returns = purchase_value * (interest_rate / 100)
-        else:
-            returns = 0
-        roi = (returns / purchase_value) * 100
-        investment.roi = roi
-        db.session.commit()
-        
-        results.append({
-            'investment_name': investment.investment_name,
-            'returns': returns,
-            'roi':roi
-        })
-
-        interest_rate = 0
-        face_value = 0
-        accrued_interest = 0
-        dividend_yield = 0
-        capital_appreciation = 0
-        expense_ratio = 0
-        nav_growth = 0
-        rental_income = 0
-        property_appreciation = 0
-        
-
-    return render_template('show_returns.html', investment=investment, results=results,
-                           interest_rate=interest_rate, face_value=face_value, accrued_interest=accrued_interest,
-                           dividend_yield=dividend_yield, capital_appreciation=capital_appreciation, 
-                           expense_ratio=expense_ratio, nav_growth=nav_growth, rental_income=rental_income, 
-                           property_appreciation=property_appreciation,roi=investment.roi)
 
 @app.route('/budgethome')
 def budgethome():
@@ -1443,15 +986,6 @@ def bud():
     cat=db.session.execute(text("Select category_id,category_name from categories"))
     family_head_id=flask_session.get("family_head_id")
     return render_template('addBudget.html',data=user_name,categories=cat)
-
-@app.route('/viewAlerts')
-def ale():
-    user_id=flask_session.get("user_id")
-    family_head_id=flask_session.get("family_head_id")
-    with db.engine.connect() as conn:
-        alerts=conn.execute(text("select * from alert"))
-        alerts=[[a.alert_id,a.budget_id,a.alert_type,a.alert_message,a.alert_date,a.is_resolved] for a in alerts]
-        return render_template('Alerts.html',alerts=alerts)
     
 @app.route("/BudgetPercentage", methods=["GET"])
 def BudgetPercentage():
@@ -1526,6 +1060,7 @@ def update_budget():
         print(str(e))
         return jsonify({"message":0}),400
 
+
 @app.route('/Alerts',methods=["GET"])
 def get_alerts():
     user_id=flask_session.get("user_id")
@@ -1554,6 +1089,18 @@ def get_alerts():
     alert=[]
     for i in alerts:
         alert.append([i.alert_id,i.alert_date.strftime('%Y-%m-%d'),i.alert_message,i.alert_type,i.budget_id,i.is_resolved])
+        expenses = db.session.execute(
+                text(
+                    "SELECT e.amount AS amt, e.expensedate AS exp_date "
+                    "FROM expenses e "
+                    "INNER JOIN budgets b ON e.categoryid = b.category_id "
+                    "AND e.expensedate BETWEEN b.start_date AND b.end_date "
+                    "WHERE b.budget_id = :BUD;"
+                ),
+                {"BUD": alert[-1][4]}
+            )
+        expense_list = [[expense.amt, expense.exp_date.strftime('%Y-%m-%d')] for expense in expenses]
+        alert[-1].append(expense_list)
     return jsonify({"alerts":alert}),200
 
 @app.route('/MarkAlert',methods=["PUT"])
