@@ -190,19 +190,11 @@ def add_user_with_verification(name, email, password, phone_number, role):
         return False
 
 
-# Verify user login
-def user_login(email, password):
-    stmt = select(users).where(users.c.email == email)
-    result = session.execute(stmt).fetchone()
-    if result and check_password_hash(result.password_hash, password):
-        return result.user_id
-    return False    
-
-#module1
+# Home
 @app.route('/')
-@app.route('/home.html')
 def home():
     return render_template('home.html')
+
 
 # Login
 @app.route('/login', methods=['GET', 'POST'])
