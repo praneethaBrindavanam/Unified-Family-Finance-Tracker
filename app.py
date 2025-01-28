@@ -58,18 +58,30 @@ class Alert(db.Model):
     alert_date = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     is_resolved = db.Column(db.Boolean, default=False, nullable=False)
 
-users = Table(
-    'users', metadata,
-    Column('user_id', Integer, primary_key=True, autoincrement=True),
-    Column('name', String(255), nullable=False),
-    Column('email', String(255), unique=True, nullable=False),
-    Column('password_hash', String(255), nullable=False), 
-    Column('phone_number', String(20), nullable=True),
-    Column('created_at', TIMESTAMP, nullable=False, server_default=func.now()),  
-    Column('family_head_id', Integer, nullable=False)  ,
-    Column('role', String(50), nullable=False)
-)
 
+class Profile(db.Model):
+    __tablename__ = 'profile'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    username = db.Column(db.String(50), unique=True, nullable=False)
+    email = db.Column(db.String(100), unique=True, nullable=False)
+    family_name = db.Column(db.String(50), nullable=False)
+    role = db.Column(db.String(50), nullable=False)
+    family_head_id = db.Column(db.String(50), nullable=False)
+    password = db.Column(db.String(255), nullable=False)
+
+    def __repr__(self):
+        return f"Username: {self.username}, Family: {self.family_name}, Role: {self.role}"
+
+
+class Role(db.Model):
+    __tablename__ = 'roles'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    role_name = db.Column(db.Enum('HoF', 'Member', 'Viewer'), nullable=False)
+    family_name = db.Column(db.String(50), nullable=False)
+    family_code = db.Column(db.String(6), unique=True, nullable=False)
+
+    def __repr__(self):
+        return f"Role: {self.role_name}, Family: {self.family_name}, Code: {self.family_code}"
 
 class Users(db.Model):
     __tablename__ = 'users'
@@ -186,60 +198,163 @@ def user_login(email, password):
         return result.user_id
     return False    
 
-
-
-
-
-
-
+#module1
 @app.route('/')
 @app.route('/home.html')
 def home():
     return render_template('home.html')
 
-@app.route('/signup', methods=['GET', 'POST'])
-def signup():
-    if request.method == 'POST':
-        try:
-            # Get form data (ensure you have the correct field names)
-            name = request.json.get('name')
-            email = request.json.get('email')
-            password = request.json.get('password')
-            phone_number = request.json.get('phone')
-            role = request.json.get('role', 'users')  # Default to 'user'
-            print(f"Received: Name={name}, Email={email}, Role={role}")
-            if name and email and password:
-                # Call the function to add user to database
-                if add_user_with_verification(name, email, password, phone_number, role):
-                    return {"success": True, "message": "Signup successful!"}, 200
-                else:
-                    return {"success": False, "message": "Database error."}, 400
-            else:
-                return {"success": False, "message": "All fields are required."}, 400
-        except Exception as e:
-            print(f"Error in signup: {e}")
-            return {"success": False, "message": "An error occurred."}, 500
-    return render_template('signup.html')
-
-
+# Login
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        email = request.form.get('email')
+        username = request.form.get('username')
         password = request.form.get('password')
-        user = Users.query.filter_by(email=email).first()
 
-        user_id = user_login(email, password)
-        user = Users.query.filter_by(email=email).first()
-
-        if user_id:  # If user_id is returned, login is successful
-            flask_session['user_id'] =user.user_id  # Store user_id in session
-            flask_session['role']=user.role
-            flask_session['family_head_id'] = user.family_head_id
-            return redirect(url_for('navigationbar'))
+        # Validate the user credentials
+        user = Profile.query.filter_by(username=username, password=password).first()
+        if user:
+            flash(f"Welcome, {user.username}!", "success")
+            return redirect('/welcome')  # Redirect to the welcome page
         else:
-            flash("Invalid email or password.", "danger")
+            flash("Invalid username or password. Please try again.", "error")
+            return redirect('/login')  # Redirect back to the login page for retry
     return render_template('login.html')
+
+
+
+# Route for profiles table
+@app.route('/profiles')
+def profiles():
+    profiles = Profile.query.all()
+    return render_template('index.html', profiles=profiles)
+
+
+# Route for add profile page
+@app.route('/add_data')
+def add_data():
+    return render_template('add_profile.html')
+
+
+# Function to handle profile addition
+@app.route('/add', methods=["POST"])
+def add_profile():
+    username = request.form.get("username")
+    email = request.form.get("email")
+    family_name = request.form.get("family_name")
+    role = request.form.get("role")
+    family_head_id = request.form.get("family_head_id")
+    password = request.form.get("password")
+
+    if username and email and family_name and role and family_head_id and password:
+        new_profile = Profile(
+            username=username,
+            email=email,
+            family_name=family_name,
+            role=role,
+            family_head_id=family_head_id,
+            password=password
+        )
+        db.session.add(new_profile)
+        db.session.commit()
+        return redirect('/add_role_data')
+    else:
+        return redirect('/add_data')
+
+
+# Function to delete a profile
+@app.route('/delete/<int:id>')
+def delete_profile(id):
+    profile = Profile.query.get(id)
+    if profile:
+        db.session.delete(profile)
+        db.session.commit()
+    return redirect('/profiles')
+
+
+# Route for roles table
+@app.route('/roles')
+def roles():
+    roles = Role.query.all()
+    return render_template('roles.html', roles=roles)
+
+
+# Route for add role page
+@app.route('/add_role_data')
+def add_role_data():
+    return render_template('add_role.html')
+
+
+@app.route('/add_role', methods=["POST"])
+def add_role():
+    role_name = request.form.get("role_name")
+    family_name = request.form.get("family_name")
+    family_code = request.form.get("family_code")
+
+    if not family_code:  # Auto-generate a 6-digit code if not provided
+        family_code = str(random.randint(100000, 999999))
+
+    if role_name and family_name and family_code:
+        try:
+            new_role = Role(role_name=role_name, family_name=family_name, family_code=family_code)
+            db.session.add(new_role)
+            db.session.commit()
+        except Exception as e:
+            print(f"Error: {e}")  # Debugging
+            db.session.rollback()
+        return redirect('/welcome')
+    else:
+        return redirect('/add_role_data')
+
+
+@app.route('/welcome')
+def welcome():
+    return render_template('welcome.html')
+
+@app.route('/delete')
+def delete():
+    return render_template('delete.html')
+
+
+# Function to delete a role
+@app.route('/delete_role/<int:id>')
+def delete_role(id):
+    role = Role.query.get(id)
+    if role:
+        db.session.delete(role)
+        db.session.commit()
+    return redirect('/roles')
+
+
+# Function to delete all roles and profiles
+@app.route('/delete_roles', methods=["GET", "POST"])
+def delete_all_roles():
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+        family_code = request.form.get("family_code")
+
+        if not username or not password or not family_code:
+            flash("All fields are required.", "error")
+            return redirect('/delete')
+
+        # Check if the credentials and family code match any profile and role
+        profile = Profile.query.filter_by(username=username, password=password).first()
+        role = Role.query.filter_by(family_code=family_code).first()
+
+        if profile and role and profile.family_name == role.family_name:
+            # Delete all profiles and roles associated with the family
+            Profile.query.filter_by(family_name=profile.family_name).delete()
+            Role.query.filter_by(family_name=role.family_name).delete()
+            db.session.commit()
+            flash("All roles and profiles deleted successfully.", "success")
+            return redirect('/')#home
+        
+        else:
+            flash("Invalid credentials or family code. Please try again.", "error")
+            return redirect('/delete')
+
+    return render_template('delete.html')
 
 @app.route('/navigationbar')
 def navigationbar():
