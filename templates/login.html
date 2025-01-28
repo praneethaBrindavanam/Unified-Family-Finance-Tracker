@@ -1,128 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
-   <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Login</title>
-      <style>
-         /* Global Styles */
-         body {
-            font-family: 'Arial', sans-serif;
-            margin: 0;
-            padding: 0;
-            background: linear-gradient(to bottom right, #6a11cb, #2575fc);
-            color: #fff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-         }
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login</title>
+</head>
+<body>
+    <h2>Login</h2>
+    <form method="POST" action="{{ url_for('login') }}">
+        <input
+            type="text"
+            name="username"
+            placeholder="Username"
+            id="username"
+            required
+        />
+        <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            id="password"
+            required
+        />
+        <button type="submit">Login</button>
+    </form>
 
-         .container {
-            background: rgba(255, 255, 255, 0.9);
-            max-width: 350px;
-            width: 100%;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-            color: #333;
-         }
-
-         h3 {
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 1.8rem;
-            color: #333;
-         }
-
-         form {
-            display: flex;
-            flex-direction: column;
-         }
-
-         label {
-            font-weight: bold;
-            margin-bottom: 5px;
-         }
-
-         input {
-            padding: 12px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            font-size: 1rem;
-         }
-
-         input:focus {
-            border-color: #6a11cb;
-            outline: none;
-            box-shadow: 0 0 5px rgba(106, 17, 203, 0.5);
-         }
-
-         button {
-            background: #6a11cb;
-            color: #fff;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.3s ease;
-         }
-
-         button:hover {
-            background: #4e0f92;
-         }
-
-         .create-account {
-            text-align: center;
-            margin-top: 15px;
-            font-size: 0.9rem;
-         }
-
-         .create-account a {
-            color: #6a11cb;
-            font-weight: bold;
-            text-decoration: none;
-         }
-
-         .create-account a:hover {
-            text-decoration: underline;
-         }
-
-         /* Mobile responsiveness */
-         @media (max-width: 480px) {
-            .container {
-               padding: 15px;
-            }
-
-            h3 {
-               font-size: 1.5rem;
-            }
-
-            button {
-               font-size: 0.9rem;
-            }
-         }
-      </style>
-   </head>
-   <body>
-      <div class="container">
-         <h3>Login</h3>
-         <form action="/login" method="POST">
-            <label for="email">Email Address</label>
-            <input type="email" id="email" name="email" placeholder="Enter your email" required>
-            
-            <label for="password">Password</label>
-            <input type="password" id="password" name="password" placeholder="Enter your password" required>
-            
-            
-            <button type="submit">Login</button>
-         </form>
-         <div class="create-account">
-            Don't have an account? <a href="/add">Create an Account</a>
-         </div>
-      </div>
-   </body>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="alert" style="color:red;">
+                {{ messages[0] }}
+            </div>
+        {% endif %}
+    {% endwith %}
+</body>
 </html>

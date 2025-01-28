@@ -9,14 +9,14 @@ html, body {
     font-family: Arial, sans-serif;
     background: #f5f6fa;
     color: #2d3436;
-    width: 100%;
+    max-width: 100%;
     height: 100%;
 }
 
 body {
     margin: 0 auto;
     padding: 20px;
-    max-width: 1200px; /* Optimized for 15.6-inch screens */
+    width: 100%; /* Optimized for 15.6-inch screens */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -34,18 +34,19 @@ h1 {
 
 /* Table Styles */
 table {
-    width: 100%;
+    width: 1500px;
     border-collapse: collapse;
     margin-top: 20px;
     background: white;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 tr th, tr td {
     border: 1px solid #dcdde1;
-    padding: 12px 16px;
+    padding: 10px 5px;
     text-align: left;
     font-size: 16px;
+    width: 10px;
 }
 
 tr th {
@@ -64,8 +65,9 @@ form {
     background: #ffffff;
     padding: 20px;
     border-radius: 8px;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-    margin-top: 20px;
+    box-shadow: 0px 4px 11px rgba(0, 0, 0, 0.2);
+    margin-top: 10px;
+    margin-bottom:20px;
     width: 100%;
     max-width: 800px;
 }
@@ -73,7 +75,6 @@ form {
 form label {
     font-weight: bold;
     color: #0984e3;
-    margin-top: 10px;
     display: block;
 }
 
@@ -82,8 +83,7 @@ form input[type="date"],
 form select {
     width: 100%;
     padding: 10px;
-    margin-top: 8px;
-    font-size: 16px;
+    font-size: 14px;
     border: 1px solid #dcdde1;
     border-radius: 4px;
     background: #f5f6fa;
@@ -97,7 +97,7 @@ form input[type="submit"] {
     border-radius: 5px;
     font-size: 16px;
     cursor: pointer;
-    margin-top: 15px;
+    margin-top: 5px;
 }
 
 form input[type="submit"]:hover {
@@ -112,7 +112,8 @@ a {
     padding: 10px 15px;
     border-radius: 5px;
     margin: 5px;
-    font-size: 16px;
+    font-size: 14px;
+    font-weight: bold;
 }
 
 a:hover {
@@ -121,39 +122,112 @@ a:hover {
 
 /* Flash Message */
 .flash {
-    padding: 15px;
-    margin-top: 15px;
+    margin-top: 30px;
     background: #dfe6e9;
     color: #2d3436;
-    font-size: 16px;
+    font-size: 13px;
     border-radius: 5px;
 }
 
-/* Progress bar */
 .progress-container {
     width: 100%;
-    background-color: #f3f3f3;
+    max-width: 600px;
+    height: 30px;
+    margin: 20px auto;
+    border: 1px solid #ccc;
     border-radius: 5px;
-    margin: 20px 0;
-    height: 25px;
-    overflow: hidden;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    background-color: #e0e0e0; /* Light gray background */
+    position: relative;
 }
 
+/* Progress Bar */
 .progress-bar {
     height: 100%;
-    background-color: #4caf50;
+    line-height: 30px; /* Centers the text vertically */
     text-align: center;
-    line-height: 25px;
     color: white;
-    transition: width 0.4s ease;
+    font-weight: bold;
+    border-radius: 5px;
+    transition: width 0.3s ease-in-out;
+}
+/* Progress Label */
+.progress-label {
+    font-size: 1.1em;
+    margin-top: 10px;
+    color: #333;
 }
 
-.progress-label {
-    margin-top: 10px;
-    font-weight: bold;
-    text-align: center;
+/* Color Styling Based on Percentage */
+.progress-bar[data-progress="0-24"] {
+    background-color: #f44336; 
 }
+
+.progress-bar[data-progress="25-49"] {
+    background-color: #ff9800; 
+}
+
+.progress-bar[data-progress="50-74"] {
+    background-color: #9c27b0;
+}
+
+.progress-bar[data-progress="75-99"] {
+    background-color: #2196f3; 
+}
+
+.progress-bar[data-progress="100"] {
+    background-color: #4caf50; 
+}
+
+/* Motivational Message */
+.motivation-message {
+    margin-top: 20px;
+    font-size: 22px;
+    text-align: center;
+    font-weight: bold;
+    color: #28a745; /* Green shade for positivity */
+    background: linear-gradient(45deg, #28a745, #218838, #179db8); /* Gradient for dynamic effect */
+    -webkit-background-clip: text; /* For older WebKit browsers */
+    background-clip: text; /* Standard property for newer browsers */
+    -webkit-text-fill-color: transparent; /* For WebKit browsers */
+    animation: fadeIn 2s ease-in-out;
+    padding: 10px;
+    border-radius: 8px;
+}
+
+/* Adding animation for subtle entry */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+
+/* dropdown menu */
+.dropdown-item {
+    padding: 0px; 
+    margin: 0px;/* Adjust padding to your preference */
+}
+  
+.dropdown-menu .dropdown-item:hover {
+    background-color: #0d6efd; /* Bootstrap primary blue color */
+    color: white; /* Ensures the text remains readable */
+}
+.actions-button{
+    background-color: #007bff; /* Bootstrap primary blue color */
+    color: white; /* Text color */
+    border: 2px #007bff;
+    border-radius: 10px; /* Removes border */
+}
+.actions-button:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
     body {
