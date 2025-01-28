@@ -1,151 +1,128 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Profile</title>
-    <style>
-        /* Global Styles */
-        body {
-            font-family: 'Arial', sans-serif;
-            margin: 0;
-            padding: 0;
-            background: linear-gradient(135deg, #6a11cb, #2575fc);
-            color: #fff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Profile</title>
+  <style>
+    /* Reset styling */
+    body {
+      margin: 0;
+      font-family: 'Arial', sans-serif;
+      background-color: #f9f9f9;
+    }
 
-        .container {
-            background: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-            width: 100%;
-            max-width: 420px;
-            padding: 30px;
-            box-sizing: border-box;
-            color: #333;
-        }
+    /* Container */
+    .container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
 
-        h1 {
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 2rem;
-            color: #333;
-        }
+    /* Form Card */
+    .form-card {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
 
-        .form-group {
-            margin-bottom: 20px;
-            position: relative;
-        }
+    /* Form Header */
+    .form-card h2 {
+      font-size: 1.8rem;
+      margin-bottom: 1.5rem;
+      color: #333;
+    }
 
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-            color: #555;
-        }
+    /* Labels and Inputs */
+    label {
+      display: block;
+      text-align: left;
+      margin-bottom: 0.5rem;
+      font-weight: bold;
+      color: #555;
+    }
 
-        input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            font-size: 14px;
-            box-sizing: border-box;
-            transition: all 0.3s ease;
-        }
+    input {
+      width: 100%;
+      padding: 0.8rem;
+      margin-bottom: 1rem;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.3s ease;
+    }
 
-        input:focus {
-            border-color: #6a11cb;
-            box-shadow: 0 0 5px rgba(106, 17, 203, 0.3);
-            outline: none;
-        }
+    input:focus {
+      border-color: #007bff;
+    }
 
-        button {
-            width: 100%;
-            padding: 12px;
-            background: #6a11cb;
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.3s ease, transform 0.2s ease;
-        }
+    /* Submit Button */
+    .submit-btn {
+      background-color: #007bff;
+      color: white;
+      padding: 0.8rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      width: 100%;
+      transition: background-color 0.3s ease;
+    }
 
-        button:hover {
-            background: #4e0f92;
-            transform: scale(1.02);
-        }
+    .submit-btn:hover {
+      background-color: #0056b3;
+    }
 
-        button:active {
-            transform: scale(0.98);
-        }
+    /* Login Link */
+    .login-link {
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      color: #555;
+    }
 
-        .toggle-password {
-            position: absolute;
-            top: 50%;
-            right: 10px;
-            transform: translateY(-50%);
-            cursor: pointer;
-            font-size: 20px;
-            color: #6a11cb;
-        }
+    .login-link a {
+      color: #007bff;
+      text-decoration: none;
+    }
 
-        /* Responsive Design */
-        @media (max-width: 480px) {
-            .container {
-                padding: 20px;
-            }
-
-            h1 {
-                font-size: 1.8rem;
-            }
-
-            button {
-                font-size: 14px;
-            }
-        }
-    </style>
+    .login-link a:hover {
+      text-decoration: underline;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Add Profile</h1>
-        <form id="profile-form" action="/add_profile" method="POST" onsubmit="redirectToOTP(event)">
-            <label for="user_id">User_id:</label>
-            <input type="text" id="user_id" name="user_id" required><br><br>
+  <div class="container">
+    <form class="form-card">
+      <h2>Create Profile</h2>
+      
+      <label for="username">Username:</label>
+      <input type="text" id="username" placeholder="Enter your username">
 
-            <label for="username">Username:</label>
-            <input type="text" id="username" name="username" required><br><br>
-        
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" required><br><br>
-        
-            <label for="family_name">Family Name:</label>
-            <input type="text" id="family_name" name="family_name" required><br><br>
-        
-            <label for="role">Role:</label>
-            <input type="text" id="role" name="role" required><br><br>
-        
-            <label for="family_head_id">Family Head ID:</label>
-            <input type="text" id="family_head_id" name="family_head_id" required><br><br>
-        
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" required><br><br>
-        
-            <button type="submit">Create Profile</button>
-        </form>
-    </div>
+      <label for="email">Email:</label>
+      <input type="email" id="email" placeholder="Enter your email">
 
-    <script>
-        function redirectToOTP(event) {
-            event.preventDefault(); // Prevent the form from submitting normally
-            window.location.href = 'verify_otp.html'; // Redirect to verify_otp.html
-        }
-    </script>
+      <label for="family-name">Family Name:</label>
+      <input type="text" id="family-name" placeholder="Enter your family name">
+
+      <label for="role">Role:</label>
+      <input type="text" id="role" placeholder="Enter your role">
+
+      <label for="family-head-id">Family Head ID:</label>
+      <input type="text" id="family-head-id" placeholder="Enter Family Head ID">
+
+      <label for="password">Password:</label>
+      <input type="password" id="password" placeholder="Enter your password">
+      
+      <button type="submit" class="submit-btn">Create Profile</button>
+
+      <p class="login-link">Already have an account? <a href="#">Login here</a></p>
+    </form>
+  </div>
 </body>
 </html>
