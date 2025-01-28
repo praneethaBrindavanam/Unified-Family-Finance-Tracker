@@ -59,7 +59,7 @@ class Alert(db.Model):
     is_resolved = db.Column(db.Boolean, default=False, nullable=False)
 
 
-class Profile(db.Model):
+class Profile(db.Model):  
     __tablename__ = 'profile'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
