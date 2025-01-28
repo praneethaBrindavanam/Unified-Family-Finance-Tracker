@@ -1,128 +1,131 @@
 <!DOCTYPE html>
 <html lang="en">
-   <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Login</title>
-      <style>
-         /* Global Styles */
-         body {
-            font-family: 'Arial', sans-serif;
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7f6;
             margin: 0;
             padding: 0;
-            background: linear-gradient(to bottom right, #6a11cb, #2575fc);
-            color: #fff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-         }
+        }
 
-         .container {
-            background: rgba(255, 255, 255, 0.9);
-            max-width: 350px;
-            width: 100%;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-            color: #333;
-         }
-
-         h3 {
+        h2 {
             text-align: center;
-            margin-bottom: 20px;
-            font-size: 1.8rem;
-            color: #333;
-         }
+            color: #4CAF50;
+            margin-top: 40px;
+        }
 
-         form {
+        .container {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        form {
             display: flex;
             flex-direction: column;
-         }
+        }
 
-         label {
-            font-weight: bold;
-            margin-bottom: 5px;
-         }
+        label {
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #333;
+        }
 
-         input {
-            padding: 12px;
+        input[type="text"],
+        input[type="password"] {
+            padding: 10px;
             margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            font-size: 1rem;
-         }
-
-         input:focus {
-            border-color: #6a11cb;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
             outline: none;
-            box-shadow: 0 0 5px rgba(106, 17, 203, 0.5);
-         }
+        }
 
-         button {
-            background: #6a11cb;
-            color: #fff;
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            border-color: #4CAF50;
+        }
+
+        input[type="submit"] {
             padding: 12px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: #fff;
             border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: bold;
+            border-radius: 5px;
             cursor: pointer;
-            transition: background 0.3s ease;
-         }
+            transition: background-color 0.3s;
+        }
 
-         button:hover {
-            background: #4e0f92;
-         }
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
 
-         .create-account {
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .register-link {
             text-align: center;
             margin-top: 15px;
-            font-size: 0.9rem;
-         }
+            font-size: 14px;
+            color: #333;
+        }
 
-         .create-account a {
-            color: #6a11cb;
-            font-weight: bold;
+        .register-link a {
+            color: #4CAF50;
             text-decoration: none;
-         }
+            font-weight: bold;
+        }
 
-         .create-account a:hover {
+        .register-link a:hover {
             text-decoration: underline;
-         }
+        }
+    </style>
+</head>
+<body>
+    <h2>Login</h2>
+    <div class="container">
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
 
-         /* Mobile responsiveness */
-         @media (max-width: 480px) {
-            .container {
-               padding: 15px;
-            }
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
 
-            h3 {
-               font-size: 1.5rem;
-            }
+            <input type="submit" value="Login">
+        </form>
 
-            button {
-               font-size: 0.9rem;
-            }
-         }
-      </style>
-   </head>
-   <body>
-      <div class="container">
-         <h3>Login</h3>
-         <form action="/login" method="POST">
-            <label for="email">Email Address</label>
-            <input type="email" id="email" name="email" placeholder="Enter your email" required>
-            
-            <label for="password">Password</label>
-            <input type="password" id="password" name="password" placeholder="Enter your password" required>
-            
-            
-            <button type="submit">Login</button>
-         </form>
-         <div class="create-account">
-            Don't have an account? <a href="/add">Create an Account</a>
-         </div>
-      </div>
-   </body>
+        <div class="register-link">
+            Don't have an account? <a href="/add_data">Create one here</a>
+        </div>
+    </div>
+
+    <script>
+        // Handle form submission
+        const loginForm = document.getElementById('loginForm');
+        loginForm.addEventListener('submit', function (e) {
+            e.preventDefault(); // Prevent default form submission
+
+            // Redirect to welcome.html
+            window.location.href = "welcome.html";
+        });
+    </script>
+</body>
 </html>
