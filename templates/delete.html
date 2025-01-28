@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Roles and Profiles</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 0;
+        }
+
+        h2 {
+            text-align: center;
+            color: #FF5733;
+            margin-top: 20px;
+        }
+
+        .container {
+            width: 80%;
+            margin: 20px auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .warning {
+            text-align: center;
+            background-color: #FFEB3B;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .warning h3 {
+            margin: 0;
+            font-weight: bold;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .action-buttons form {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .action-buttons label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .action-buttons input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        .delete-link {
+            background-color: #f44336;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            display: inline-block;
+            text-decoration: none;
+            width: 100%;
+        }
+
+        .delete-link:hover {
+            background-color: #d32f2f;
+        }
+
+        .cancel-button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        .cancel-button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h2>Delete Roles and Profiles</h2>
+    <div class="container">
+        <!-- Warning about Deletion -->
+        <div class="warning">
+            <h3>Warning! This will delete all roles and profiles. This action cannot be undone.</h3>
+        </div>
+
+        <!-- Username, Password, and Family Code Confirmation -->
+        <div class="action-buttons">
+            <form method="POST" action="{{ url_for('delete_all_roles') }}">
+                <label for="username">
+                    Username:
+                </label>
+                <input 
+                    type="text" 
+                    id="username" 
+                    name="username" 
+                    placeholder="Enter your username" 
+                    required>
+                
+                <label for="password">
+                    Password:
+                </label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    placeholder="Enter your password" 
+                    required>
+                
+                <label for="family_code">
+                    Family Code:
+                </label>
+                <input 
+                    type="text" 
+                    id="family_code" 
+                    name="family_code" 
+                    placeholder="Enter the family code" 
+                    required>
+
+                <button 
+                    type="submit" 
+                    class="delete-link">
+                    Confirm Deletion
+                </button>
+            </form>
+            <a href="/welcome" class="cancel-button">Cancel</a>
+        </div>
+    </div>
+</body>
+</html>
