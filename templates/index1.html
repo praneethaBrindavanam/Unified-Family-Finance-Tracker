@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profiles - Unified Family</title>
+</head>
+<body>
+    <h3>Profiles</h3>
+    <a href="/add_data">Add Profile</a>
+    <br><br>
+
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Family Name</th>
+                <th>Role</th>
+                <th>Family Head ID</th>
+                <th>Password</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for data in profiles %}
+            <tr>
+                <td>{{ data.id }}</td>
+                <td>{{ data.username }}</td>
+                <td>{{ data.email }}</td>
+                <td>{{ data.family_name }}</td>
+                <td>{{ data.role }}</td>
+                <td>{{ data.family_head_id }}</td>
+                <td>{{ data.password }}</td>
+                <td>
+                    <a href="/delete/{{ data.id }}" type="button">Delete</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
