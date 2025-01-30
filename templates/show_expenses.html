@@ -6,7 +6,7 @@
     <title>Expenses</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        nav{
+        nav {
             padding: 30px;
         }
         nav ul {
@@ -20,67 +20,507 @@
             margin-right: 2.5rem;
             color: #fff;
         }
-        nav li a{
+        nav li a {
             text-decoration: none;
             color: #fff;
         }
-        nav li a .active{
+        nav li a .active {
             color: #92a1c2;
         }
-        nav li a:hover{
+        nav li a:hover {
             color: #bd6c73;
         }
-        body{
+        body {
             background-color: #6b597f;
         }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .table th, .table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .table th {
+            background-color: #2e365a;
+        }
+        input[type="date"] {
+            margin: 0 10px;
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        .filters {
+            display: flex;
+            flex-wrap: wrap;                /* Makes items wrap on smaller screens */
+            justify-content: space-between; /* Evenly distributes items */
+            gap: 15px;                      /* Adds space between items */
+        }
+
+        .form-group {
+            min-width: 150px;               /* Ensures filters are not too narrow */
+            flex: 1;                        /* Allows filters to grow evenly */
+            position: relative;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .form-group input[type="range"]{
+            position: absolute;
+            width: 100%;
+            -webkit-appearance: none;
+            background: transparent;
+            pointer-events: none;
+        }
+
+        .form-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            pointer-events: all;
+            height: 16px;
+            width: 16px;
+            background: #007bff;
+            border-radius: 50%;
+            cursor: pointer;
+            position: relative;
+            z-index: 2;
+        }
+
+        .form-group input[type="range"]::-webkit-slider-runnable-track {
+            height: 6px;
+            background: #ddd;
+            border-radius: 3px;
+            pointer-events: none;
+        }
+
+        #amountDisplay {
+            margin-top: 5px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .quick-filters a {
+            margin-right: 10px;             /* Adds spacing between quick-filter buttons */
+        }
+
+        @media (max-width: 768px) {
+            .filters {
+                justify-content: center;    /* Centers filters for smaller screens */
+                gap: 10px;                  /* Reduces spacing on small screens */
+            }
+
+            .form-group {
+                flex: none;                 /* Stops filters from stretching on narrow viewports */
+                width: 100%;                /* Makes each filter full width */
+            }
+
+            .quick-filters {
+                justify-content: center;    /* Aligns quick filters centrally */
+            }
+        }
+
+        .quick-stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;  /* Allows wrapping on smaller screens */
+            justify-content: space-between; /* Distributes the cards evenly */
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        .card {
+            border: 1px solid #ddd;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px;
+            width: 23%;  /* Each card will take up 23% of the width, which is 4 cards in a row */
+            background-color: #f9f9f9;
+            box-sizing: border-box;  /* Ensures padding and border are included in the width */
+        }
+
+        .card h3 {
+            margin-bottom: 15px;  /* Adds space between the header and value */
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .card .value {
+            font-size: 18px;
+            font-weight: normal;
+            margin-top: 10px;  /* Adds some space between the header and value */
+        }
+
+        @media (max-width: 768px) {
+            .card {
+                width: 48%; /* Each card takes up about half the screen width on smaller screens */
+            }
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                width: 100%; /* Each card takes up the full width on very small screens */
+            }
+        }
+
+
+
     </style>
 </head>
 <body>
-    <!--
-    <nav style="background-color: #2e365a;"><ul>
-        <li><a href="">Home</a></li>
-        <li><a href="/expenses" class="active">Expenses</a></li>
-        <li><a href="">Budget</a></li>
-        <li><a href="">Goals</a></li></ul>
+    <nav style="background-color: #2e365a;">
+        <ul>
+            <li><a href="">Home</a></li>
+            <li><a href="/show_expenses" class="active">Expenses</a></li>
+            <li><a href="">Budget</a></li>
+            <li><a href="">Goals</a></li>
+        </ul>
     </nav>
-    -->
     <div class="container mt-5">
         <h2 class="text-center" style="color: #fff;">Expenses</h2>
-        <div class="text-center mb-3" >
+        <div class="text-center mb-3">
             <a href="/add_expenses" class="btn btn-primary" style="background-color: #bd6c73;">Add New Expense</a>
+            <button type="button" class="btn btn-primary" style="background-color: #bd6c73;" data-bs-toggle="modal" data-bs-target="#manageCategoriesModal">
+                Manage Categories
+            </button>
         </div>
+        <div class="header mb-3">
+            <form method="GET" action="{{ url_for('show_expenses') }}" style="margin: 0;">
+                <div class="filters d-flex justify-content-between align-items-center flex-wrap">
+                    <!-- Month Filter -->
+                    <div class="form-group">
+                        <label for="month" class="text-white small">Month:</label>
+                        <select id="month" name="month" class="form-control form-control-sm" onchange="this.form.submit()">
+                            <option value="">All</option>
+                            {% for month in months %}
+                                <option value="{{ month }}" {% if selected_month == month %}selected{% endif %}>
+                                    {{ month }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+        
+                    <!-- Start Date Filter -->
+                    <div class="form-group">
+                        <label for="start_date" class="text-white small">Start Date:</label>
+                        <input type="date" id="start_date" name="start_date" value="{{ start_date }}" class="form-control form-control-sm" onchange="this.form.submit()">
+                    </div>
+        
+                    <!-- End Date Filter -->
+                    <div class="form-group">
+                        <label for="end_date" class="text-white small">End Date:</label>
+                        <input type="date" id="end_date" name="end_date" value="{{ end_date }}" class="form-control form-control-sm" onchange="this.form.submit()">
+                    </div>
+        
+                    <!-- Category Filter -->
+                    <div class="form-group">
+                        <label for="category" class="text-white small">Category:</label>
+                        <select name="category" id="category" class="form-control form-control-sm" onchange="this.form.submit()">
+                            <option value="">All</option>
+                            {% for category in categories %}
+                                <option value="{{ category[1] }}" {% if category[1] == selected_category %}selected{% endif %}>
+                                    {{ category[1] }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+        
+                    <!-- Amount Range Filter -->
+                    <div class="form-group">
+                        <label for="amountRange" class="text-white small">Amount Range:</label>
+                        <div>
+                            <!-- Min range input -->
+                        <input type="range" id="minAmountRange" class="form-range form-control-sm" min="{{ min_amount }}" max="{{ max_amount }}" step="5" value="{{ min_amount }}" onchange="updateAmountDisplay()">
+                        <!-- Max range input -->
+                        <input type="range" id="maxAmountRange" class="form-range form-control-sm" min="{{ min_amount }}" max="{{ max_amount }}" step="5" value="{{ max_amount }}" onchange="updateAmountDisplay()">
+                        </div>
+                        <div id="amountDisplay" class="text-white small mt-4">
+                            <span id="minAmountDisplay">₹{{min_amount}}</span> - <span id="maxAmountDisplay">₹{{ max_amount }}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Filters -->
+                    <div class="quick-filters d-flex align-items-center">
+                        <a href="{{ url_for('show_expenses', time_period='last_10_days', category=selected_category) }}" 
+                           class="btn btn-sm {% if selected_time_period == 'last_10_days' %}btn-primary{% else %}btn-secondary{% endif %} me-2">
+                            Last 10 Days
+                        </a>
+                        <a href="{{ url_for('show_expenses', time_period='1_month', category=selected_category) }}" 
+                           class="btn btn-sm {% if selected_time_period == '1_month' %}btn-primary{% else %}btn-secondary{% endif %} me-2">
+                            Last 1 Month
+                        </a>
+                        <a href="{{ url_for('show_expenses', time_period='3_months', category=selected_category) }}" 
+                           class="btn btn-sm {% if selected_time_period == '3_months' %}btn-primary{% else %}btn-secondary{% endif %} me-2">
+                            Last 3 Months
+                        </a>
+                    </div>
+        
+                    <!-- Clear Filters Button -->
+                    <div>
+                        <a href="{{ url_for('show_expenses') }}" class="btn btn-warning btn-sm">Clear Filters</a>
+                    </div>
+                </div>
+            </form>
+        </div>        
+
+        <!-- Quick Stats Section -->
+        <div class="quick-stats">
+            <div class="card">
+                <h3>Total Spent</h3>
+                <p class="value">₹{{ total_spent | round(2) }}</p>
+            </div>
+            <div class="card">
+                <h3>Number of Expenses</h3>
+                <p class="value">{{ num_expenses }}</p>
+            </div>
+            <div class="card">
+                <h3>Average Expense</h3>
+                <p class="value">₹{{ avg_expense | round(2) }}</p>
+            </div>
+            <div class="card">
+                <h3>Highest Spent Category</h3>
+                <p class="value">{{ highest_spent_category_name }}</p>
+                <p class="value">₹{{ highest_spent_category_total | round(2) }}</p>
+            </div>
+        </div>
+        
+
         <table class="table table-bordered table-striped" style="background-color: #a2869c;">
             <thead class="table-dark" style="background-color: #a2869c; color: #ffffff;">
                 <tr>
-                    <th>Expense ID</th>
+                    <th>Expense</th>
                     <th>Category</th>
                     <th>Amount</th>
                     <th>Description</th>
                     <th>Date</th>
                     <th>Time</th>
                     <th>Receipt</th>
+                    <th>Edit</th>
+                    <th>Add Amount</th>
+                    <th>Delete</th>
                 </tr>
             </thead>
             <tbody>
                 {% for expense in expenses %}
-                <tr style="background-color: #d1b1c6;">
+                <tr class="expense-row" style="background-color: #d1b1c6;">
                     <td>{{ expense.ExpenseID }}</td>
-                    <td>{{ expense.categoryid }}</td>
+                    <td>{{ expense.category_name }}</td>
                     <td>{{ expense.amount }}</td>
                     <td>{{ expense.expensedesc }}</td>
                     <td>{{ expense.expensedate }}</td>
                     <td>{{ expense.expensetime }}</td>
                     <td>{{ expense.receiptpath }}</td>
+                    <td>
+                        <a href="/edit_expenses/{{ expense.ExpenseID }}" class="btn btn-warning">Edit</a>
+                    </td>
+                    <td>
+                        <button class="btn btn-primary btn-sm add-amount-btn" 
+                                data-id="{{ expense.ExpenseID }}" 
+                                data-amount="{{ expense.amount }}" 
+                                style="background-color: #bd6c73;">
+                            Add Amount
+                        </button>
+                    </td>
+                    <td>
+                        <form action="{{ url_for('delete_expense', ExpenseID=expense.ExpenseID) }}" method="POST" style="display:inline;">
+                            <button type="submit" class="btn btn-danger" onclick="return confirmDelete();">Delete</button>
+                        </form>
+                    </td>
                 </tr>
                 {% endfor %}
                 {% if not expenses %}
                 <tr>
-                    <td colspan="7" class="text-center" style="background-color: #d1b1c6; color: #000000;">No expenses to display</td>
+                    <td colspan="9" class="text-center" style="background-color: #d1b1c6; color: #000000;">No expenses to display</td>
                 </tr>
                 {% endif %}
             </tbody>
         </table>
-        
     </div>
+
+    <!-- Add Amount Modal -->
+    <div class="modal fade" id="addAmountModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Amount</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addAmountForm">
+                        <input type="hidden" id="expenseId" name="expenseId">
+                        <div class="mb-3">
+                            <label for="currentAmount" class="form-label">Current Amount</label>
+                            <input type="text" id="currentAmount" class="form-control" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="addedAmount" class="form-label">Amount to Add</label>
+                            <input type="number" id="addedAmount" name="addedAmount" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-success">Submit</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Manage Categories Modal -->
+    <div class="modal fade" id="manageCategoriesModal" tabindex="-1" aria-labelledby="manageCategoriesModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="manageCategoriesModalLabel">Manage Categories</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <p>What would you like to do?</p>
+                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addCategoryModal" data-bs-dismiss="modal">
+                        Add Category
+                    </button>
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteCategoryModal" data-bs-dismiss="modal">
+                        Delete Category
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Add Category Modal -->
+    <div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addCategoryModalLabel">Add Category</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="{{ url_for('add_new_category') }}" method="POST">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="category_name" class="form-label">Category Name</label>
+                            <input type="text" class="form-control" id="category_name" name="category_name" placeholder="Enter category name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="category_desc" class="form-label">Category Description</label>
+                            <textarea id="category_desc" name="category_desc" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-success">Add Category</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- Delete Category Modal -->
+    <div class="modal fade" id="deleteCategoryModal" tabindex="-1" aria-labelledby="deleteCategoryModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteCategoryModalLabel">Delete Category</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="{{ url_for('delete_category') }}" method="POST">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="category_id" class="form-label">Select Category to Delete</label>
+                            <select id="category_id" name="category_id" class="form-select" required>
+                                <option value="" selected>--Select Category--</option>
+                                {% for category in user_categories %}
+                                <option value="{{ category.category_id }}">{{ category.category_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-danger">Delete Category</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Show modal on button click
+            $(".add-amount-btn").click(function () {
+                const expenseId = $(this).data("id");
+                const currentAmount = $(this).data("amount");
+
+                $("#expenseId").val(expenseId);
+                $("#currentAmount").val(currentAmount);
+                $("#addAmountModal").modal("show");
+            });
+
+            // Handle form submission
+            $("#addAmountForm").submit(function (e) {
+                e.preventDefault();
+                const expenseId = $("#expenseId").val();
+                const addedAmount = $("#addedAmount").val();
+
+                $.ajax({
+                    url: "/add_amount_to_expenses",
+                    type: "POST",
+                    data: JSON.stringify({ ExpenseID: expenseId, addedAmount: addedAmount }),
+                    contentType: "application/json",
+                    success: function (response) {
+                        alert("Amount added successfully!");
+                        location.reload();
+                    },
+                    error: function (xhr, status, error) {
+                        alert("Error: " + xhr.responseText);
+                    }
+                });
+            });
+        });
+
+        // Update displayed amounts based on slider values
+        function updateAmountDisplay() {
+            var minSlider = document.getElementById("minAmountRange");
+            var maxSlider = document.getElementById("maxAmountRange");
+            var minAmountDisplay = document.getElementById("minAmountDisplay");
+            var maxAmountDisplay = document.getElementById("maxAmountDisplay");
+        
+            // Set the displayed values
+            minAmountDisplay.textContent = "₹" + minSlider.value;
+            maxAmountDisplay.textContent = "₹" + maxSlider.value;
+        
+            // Filter the table based on selected amount range
+            filterExpensesByAmount(minSlider.value, maxSlider.value);
+        }
+        
+        // Filter expenses based on the selected amount range
+        function filterExpensesByAmount(minAmount, maxAmount) {
+            var rows = document.querySelectorAll('.expense-row');
+        
+            rows.forEach(row => {
+                var amountCell = row.cells[2]; // Assuming amount is in the 3rd column
+                var amount = parseFloat(amountCell.innerText);
+        
+                // Show or hide rows based on the range
+                if (amount >= minAmount && amount <= maxAmount) {
+                    row.style.display = ""; // Show row
+                } else {
+                    row.style.display = "none"; // Hide row
+                }
+            });
+        }
+        </script>
+        <script>
+        function confirmDelete() {
+            // Show a confirmation dialog
+            var userConfirmed = window.confirm("Are you sure you want to delete this expense?");
+            
+            // If user confirms, submit the form, otherwise cancel it
+            return userConfirmed;
+        }
+    </script>
 </body>
 </html>

@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -11,7 +12,7 @@
   </head>
   <body>
     <h1>Goal Entry Form</h1>
-    <form action="" method="post">
+    <form action="{{ url_for('add_goal') }}" method="post">
      
 
       <label for="target_amount">Target Amount:</label>
@@ -29,12 +30,7 @@
       <label for="end_date">End Date:</label>
       <input type="date" id="end_date" name="end_date" required />
 
-      <label for="goal_status">Goal Status:</label>
-      <select id="goal_status" name="goal_status" required>
-        <option value="On-going">On-going</option>
-        <option value="Completed">Completed</option>
-        <option value="Cancelled">Cancelled</option>
-      </select>
+      
 
       <label for="goal_description">Goal Description:</label>
       <input
@@ -44,14 +40,7 @@
         required
       />
 
-      <label for="achieved_amount">Achieved Amount:</label>
-      <input
-        type="number"
-        id="achieved_amount"
-        name="achieved_amount"
-        step="0.01"
-        required
-      />
+      
 
       <label for="goal_type">Goal Type:</label>
       <select id="goal_type" name="goal_type" required>

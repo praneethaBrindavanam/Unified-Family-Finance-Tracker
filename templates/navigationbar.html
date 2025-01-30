@@ -66,13 +66,13 @@
             <a class="nav-link" href="{{url_for('budgethome')}}">Budget Management</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="{{url_for('saving_goals')}}">Savings Goals Management</a>
+            <a class="nav-link" href="{{url_for('savings_goals')}}">Savings Goals Management</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="http://127.0.0.1:5000/organize">Report Visualization</a>
+            <a class="nav-link" href="{{url_for('mod5sprint2')}}">Report Visualization</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link disabled" aria-disabled="true">Disabled</a>
+            <a class="nav-link" href="{{ url_for('delete_all_roles') }}">Logout</a>
         </li>
     </ul>
     <div style="background-color: #A2869C;"></div>

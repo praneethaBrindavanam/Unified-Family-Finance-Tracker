@@ -1,119 +1,131 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
     <style>
-        /* General Styles */
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
+            background-color: #f4f7f6;
             margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+            padding: 0;
         }
 
         h2 {
             text-align: center;
+            color: #4CAF50;
+            margin-top: 40px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 16px;
+            margin-bottom: 8px;
             color: #333;
         }
 
-        /* Form Styles */
-        form {
-            background: #ffffff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            width: 300px;
-            text-align: center;
-        }
-
-        form input {
-            width: calc(100% - 20px);
+        input[type="text"],
+        input[type="password"] {
             padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            box-sizing: border-box;
-            font-size: 14px;
-        }
-
-        form button {
-            width: 100%;
-            padding: 10px;
-            background-color: #0d0d88;
-            border: none;
-            color: white;
+            margin-bottom: 15px;
             font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            border-color: #4CAF50;
+        }
+
+        input[type="submit"] {
+            padding: 12px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
             border-radius: 5px;
             cursor: pointer;
-            margin-top: 10px;
+            transition: background-color 0.3s;
         }
 
-        form button:hover {
-            background-color: #0a0a70;
+        input[type="submit"]:hover {
+            background-color: #45a049;
         }
 
-        /* Link Styles */
-        form p {
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .register-link {
+            text-align: center;
+            margin-top: 15px;
             font-size: 14px;
-            margin-top: 10px;
-            color: #555;
+            color: #333;
         }
 
-        form p a {
-            color:  #0d0d88;
+        .register-link a {
+            color: #4CAF50;
             text-decoration: none;
+            font-weight: bold;
         }
 
-        form p a:hover {
-            text-decoration: underline;
-        }
-
-        .forgot-password {
-            margin-top: 15px; /* Adjusted margin to add space between login button and forgot password link */
-            font-size: 14px;
-        }
-
-        .forgot-password a {
-            color: #0d0d88;
-            text-decoration: none;
-        }
-
-        .forgot-password a:hover {
+        .register-link a:hover {
             text-decoration: underline;
         }
     </style>
 </head>
-
 <body>
+    <h2>Login</h2>
+    <div class="container">
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
     
-    <form class="Login" id="loginForm" action="/login" method="post">
-        <h2>Login</h2>
-        <!-- Display flash messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        <ul>
-        {% for category, message in messages %}
-            <li class="{{ category }}">{{ message }}</li>
-        {% endfor %}
-        </ul>
-    {% endif %}
-    {% endwith %}
-    
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
 
-        <input type="email" name="email" placeholder="Email" required>
-        <input type="password" name="password" placeholder="Password" required>
-        <br>
-        <button type="submit">Login</button>
-        
+            <input type="submit" value="Login">
+        </form>
 
-        <div class="forgot-password">
-            <a href="{{ url_for('forgot_password') }}">Forgot Password?</a>
+        <div class="register-link">
+            Don't have an account? <a href="/add_data">Create one here</a>
         </div>
-        <p>Don't have an account? <a href="{{ url_for('signup') }}">Sign Up</a></p>
-    </form>
-</body>
+    </div>
 
+    <script>
+        // Handle form submission
+        const loginForm = document.getElementById('loginForm');
+        loginForm.addEventListener('submit', function (e) {
+            e.preventDefault(); // Prevent default form submission
+
+            // Redirect to welcome page
+            window.location.href = "/navigationbar"; // Ensure this route exists in your backend
+        });
+    </script>
+</body>
 </html>

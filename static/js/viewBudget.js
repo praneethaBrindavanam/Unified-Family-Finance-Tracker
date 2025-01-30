@@ -8,9 +8,8 @@ async function deleteBudget(id) {
       body: JSON.stringify({ budget_id: id }),
     });
     if (response.ok) {
-      const msg = document.createElement("p");
-      msg.innerText = "Budget deleted successfully";
-      msg.style.color = "green";
+      const msg = document.createElement("div");
+      msg.innerHTML='<div class=\"alert alert-danger\" role=\"alert\">Budget deleted successfully</div>'
       const container = document.getElementsByClassName("alert-container")[0];
       container.appendChild(msg);
       setTimeout(() => {
@@ -19,28 +18,28 @@ async function deleteBudget(id) {
           window.location.reload();
         }
         reload();
-      }, 1000);
+      }, 1500);
     } else {
       alert("Failed to delete the budget.");
     }
   }
 }
 
-function openUpdateModal(
-  budgetId,
-  budgetName,
-  budgetAmount,
-  category,
-  startDate,
-  endDate
-) {
-  document.getElementById("updateSection").style.display = "flex";
+function openUpdateModal(budgetId, category, budgetAmount, startDate, endDate) {
+  const modal = new bootstrap.Modal(document.getElementById("updateSection"));
   document.getElementById("budgetId").value = budgetId || "";
   document.getElementById("budgetAmount").value = budgetAmount || "";
   document.getElementById("budgetCategory").value = category || 1;
   document.getElementById("startDate").value = startDate || "";
   document.getElementById("endDate").value = endDate || "";
+  modal.show(); // Show the modal using Bootstrap
 }
+
+function closeUpdateModal() {
+  const modal = bootstrap.Modal.getInstance(document.getElementById("updateSection"));
+  modal.hide(); // Hide the modal using Bootstrap
+}
+
 
 // Function to Handle Update Form Submission
 async function handleUpdate(event) {
@@ -52,39 +51,40 @@ async function handleUpdate(event) {
     start_date: document.getElementById("startDate").value,
     end_date: document.getElementById("endDate").value,
   };
-  const response = await fetch("http://127.0.0.1:5000/Budget", {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(updatedData),
-  });
-  console.log("Updated Data:", updatedData, response.message);
-  const res = await response.json();
 
-  if (res.message) {
-    const msg = document.createElement("p");
-    msg.innerText = "Budget updated successfully";
-    msg.style.color = "yellow";
-    const container = document.getElementsByClassName("alert-container")[0];
-    container.appendChild(msg);
-    setTimeout(() => {
-      msg.remove();
-      function reload() {
+  try {
+    const response = await fetch("http://127.0.0.1:5000/Budget", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(updatedData),
+    });
+
+    const res = await response.json();
+
+    if (res.message) {
+      const msg = document.createElement("div");
+      msg.innerHTML='<div class=\"alert alert-warning\" role=\"alert\">Budget Updated successfully</div>'
+      const container = document.getElementsByClassName("alert-container")[0];
+      container.appendChild(msg);
+
+      setTimeout(() => {
+        msg.remove();
         window.location.reload();
-      }
-      reload();
-    }, 1000);
-  } else {
-    alert("Failed to delete the budget.");
+      }, 1000);
+    } else {
+      alert("Failed to update the budget.");
+    }
+  } catch (error) {
+    console.error("Error updating budget:", error);
+    alert("An error occurred. Please try again.");
   }
 
   closeUpdateModal(); // Close the modal
 }
 
-function closeUpdateModal() {
-  document.getElementById("updateSection").style.display = "none"; // Hide modal
-}
+
 
 async function renewBudget(category_id,limit,start_date,end_date,user_id){
     const start=new Date(start_date)
@@ -110,8 +110,8 @@ async function renewBudget(category_id,limit,start_date,end_date,user_id){
           })
       });
       if(response.status=201){
-          const msg=document.createElement("p")
-          msg.innerText="Budget Renew Successfully for the Same Duration"
+          const msg = document.createElement("div");
+          msg.innerHTML='<div class=\"alert alert-primary\" role=\"alert\">Budget Renewed for the same duration successfully</div>'
           document.getElementsByClassName("alert-container")[0].appendChild(msg)
           setTimeout(() => {
               msg.remove();
@@ -121,4 +121,64 @@ async function renewBudget(category_id,limit,start_date,end_date,user_id){
   } catch (err) {
       console.log(err);
   }
+}
+
+function filterCards() {
+  let month = document.getElementById("month-selector").value;
+  let category = document.getElementById("category-selector").value;
+  let limit = document.getElementById("limit-filter").value;
+  let startDate = document.getElementById("start-date-filter").value;
+  let user_id = document.getElementById("user-selector").value;
+
+  let cards = document.querySelectorAll("#budgetCards .card");
+
+  cards.forEach(card => {
+    let cardCategory = card.querySelector(".card-title").textContent.split(" - ")[0].trim();
+    let cardLimit = parseFloat(card.querySelector(".card-title").textContent.split(" - ₹")[1].trim());
+    let cardStartDate = card.querySelector(".card-text").textContent.split("Start: ")[1].split(" |")[0].trim();
+    let cardUserId = card.querySelector(".card-text:last-of-type").textContent.split("User Name: ")[1].trim();
+    console.log(cardCategory,cardLimit,cardStartDate,cardUserId)
+    let showCard = true;
+
+    if (month) {
+      let cardMonth = new Date(cardStartDate).getMonth() + 1;
+      if (cardMonth != month) showCard = false;
+    }
+
+    if (user_id && user_id != cardUserId) showCard = false;
+
+    if (category && cardCategory != category) showCard = false;
+
+    if (limit && cardLimit > parseFloat(limit)) showCard = false;
+
+    if (startDate && cardStartDate < startDate) showCard = false;
+
+    card.parentElement.style.display = showCard ? "" : "none";
+  });
+}
+
+function sortCards() {
+  let container = document.getElementById("budgetCards");
+  let cards = Array.from(container.querySelectorAll(".col-md-4"));
+  let sortOrder = document.getElementById("month-sorter").value;
+
+  if (sortOrder === "") return; // If "None" is selected, exit the function
+
+  let ascending = sortOrder == 1;
+
+  cards.sort((a, b) => {
+    let aDate = parseDate(a.querySelector(".card-text").textContent.split("Start: ")[1].split(" |")[0].trim());
+    let bDate = parseDate(b.querySelector(".card-text").textContent.split("Start: ")[1].split(" |")[0].trim());
+
+    return ascending ? aDate - bDate : bDate - aDate;
+  });
+
+  // Append sorted cards back to the container
+  cards.forEach(card => container.appendChild(card));
+}
+
+function parseDate(dateString) {
+  if (!dateString) return new Date(0); // Handle empty dates by returning oldest date
+  let parts = dateString.split('-');  // Assumes format YYYY-MM-DD
+  return new Date(parts[0], parts[1] - 1, parts[2]); // Month is zero-based
 }

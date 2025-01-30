@@ -5,78 +5,177 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Unified Family Expense Tracker</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <link rel="stylesheet" href="../static/css/budget.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="../static/js/viewBudget.js"></script>
 </head>
 <body>
-  <div class="alert-container">
-    <h2>Budgets</h2>
-    <div class="alert-table">
-      <table id="alertTable">
-        <thead>
-          <tr>
-            <th>Id</th>
-            <th>Category</th>
-            <th>Limit</th>  
-            <th>Start</th>
-            <th>End</th>
-            <th>UserId</th>
-            <th>Update</th>
-            <th>Delete</th>
-            <th>Renew</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for budget in budgets %}
-              <tr>
-                <td>{{budget[0]}}</td>
-                <td>{{budget[1]}}</td>
-                <td>{{budget[2]}}</td>
-                <td>{{budget[3]}}</td>
-                <td>{{budget[4]}}</td>
-                <td>{{budget[5]}}</td>
-                <td onclick="openUpdateModal('{{budget[0]}}', '{{budget[1]}}', '{{budget[2]}}', '{{budget[3]}}', '{{budget[4]}}', '{{budget[5]}}')">
-
-                <i class="fas fa-edit" style="color: #3498db;"></i>
-                </td>
-                <td onclick="deleteBudget('{{budget[0]}}')">
-                    <i class="fas fa-trash-alt" style="color: #e74c3c;"></i>
-                </td>
-                <td onclick="renewBudget('{{budget[1]}}','{{budget[2]}}','{{budget[3]}}','{{budget[4]}}','{{budget[5]}}')">
-                    <i class="fas fa-sync-alt" style="color: #27ae60;"></i>
-                </td>
-              </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+  <div class="row" style="background-color: black;height:80px">
+    <div class="col-11">
+      <h2 id="heading" class="text-center" style="color:white ; padding-top: 10px;font-weight: 400;">Budget Management</h2>
     </div>
-    <div id="updateSection">
-      <div class="modal-content">
-        <h2>Update Budget</h2>
-        <form id="updateForm" onsubmit="handleUpdate(event)">
-          <label for="budgetId">Budget ID:</label>
-          <input type="text" id="budgetId" name="budgetId" disabled><br><br>
+  </div>
   
-          <label for="budgetAmount">Amount:</label>
-          <input type="number" id="budgetAmount" name="budgetAmount"><br><br>
-  
-          <label for="budgetCategory">Category:</label>
-          <select id="budgetCategory" name="budgetCategory" >
-            <option value=1>Category 1</option>
-            <option value=2>Category 2</option>
-            <option value=3>Category 3</option>
-          </select><br><br>
-  
-          <label for="startDate">Start Date:</label>
-          <input type="date" id="startDate" name="startDate"><br><br>
-  
-          <label for="endDate">End Date:</label>
-          <input type="date" id="endDate" name="endDate"><br><br>
-  
-          <button type="submit">Update Budget</button>
-          <button type="button" onclick="closeUpdateModal()">Cancel</button>
-        </form>
+  <div class="container mt-4">
+    <!-- Filters Section -->
+    <div class="filters mb-4">
+      <h3 class="text-primary">Filter By:</h3>
+      <form class="row g-4">
+        
+        <!-- Date Filters -->
+        <div class="col-md-3">
+          <label for="start-date-filter" class="form-label">Start Date:</label>
+          <input type="date" id="start-date-filter" class="form-control" onchange="filterCards()" placeholder="Select start date">
+        </div>
+
+        <div class="col-md-3">
+          <label for="month-selector" class="form-label">Start Month:</label>
+          <select id="month-selector" class="form-select" onchange="filterCards()">
+            <option value="">All Months</option>
+            <option value=1>January</option>
+            <option value=2>February</option>
+            <option value=3>March</option>
+            <option value=4>April</option>
+            <option value=5>May</option>
+            <option value=6>June</option>
+            <option value=7>July</option>
+            <option value=8>August</option>
+            <option value=9>September</option>
+            <option value=10>October</option>
+            <option value=11>November</option>
+            <option value=12>December</option>
+          </select>
+        </div>
+
+        <!-- Category Filter with Icons -->
+        <div class="col-md-3">
+          <label for="category-selector" class="form-label">Category:</label>
+          <select id="category-selector" class="form-select" onchange="filterCards()">
+            <option value="">All Categories</option>
+            <option value=1>🍔 Food</option>
+            <option value=2>🎉 Outing</option>
+            <option value=3>📚 Education</option>
+            <option value=4>💊 Medicines</option>
+          </select>
+        </div>
+
+        <!-- Expense Limit Filter -->
+        <div class="col-md-3">
+          <label for="limit-filter" class="form-label">Expense Limit (Max):</label>
+          <div class="input-group">
+            <span class="input-group-text">$</span>
+            <input type="number" id="limit-filter" class="form-control" oninput="filterCards()" placeholder="Max limit" title="Enter max amount">
+          </div>
+        </div>
+
+        <!-- User Filter with Search Function -->
+        <div class="col-md-3">
+          <label for="user-selector" class="form-label">User Name:</label>
+          <input type="text" id="user-selector" class="form-control" oninput="filterCards()" placeholder="Search User Name" title="Search by User ID">
+        </div>
+
+        <!-- Clear Filters Button -->
+        <div class="col-md-3 d-flex align-items-end">
+          <button type="button" class="btn btn-warning w-100" onclick="clearFilters()">
+            <i class="fas fa-eraser"></i> Clear Filters
+          </button>
+        </div>
+
+      </form>
+    </div>
+
+    <!-- Sort Section -->
+    <div class="sorters mb-4">
+      <h3 class="text-primary">Sort By Date:</h3>
+      <div class="d-flex">
+        <div class="me-3">
+          <select id="month-sorter" class="form-select" onchange="sortCards()">
+            <option value="">None</option>
+            <option value=1>Ascending</option>
+            <option value=0>Descending</option>
+          </select>
+        </div>
       </div>
-    </div>  
+    </div>
+    <div class="alert-container"></div>
+
+    <!-- Cards for Budget Display -->
+    <div class="row" id="budgetCards">
+      {% for budget in budgets %}
+      <div class="col-md-4 mb-3">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">{{budget[1]}} - ₹{{budget[2]}}</h5>
+            <p class="card-text">Start: {{budget[3]}} | End: {{budget[4]}}</p>
+            <p class="card-text">User Name: {{budget[5]}}</p>
+            <div class="d-flex justify-content-between">
+              <button class="btn btn-primary" onclick="openUpdateModal('{{budget[0]}}', '{{budget[1]}}', '{{budget[2]}}', '{{budget[3]}}', '{{budget[4]}}')">
+                <i class="fas fa-edit"></i> Update
+              </button>
+              <button class="btn btn-danger" onclick="deleteBudget('{{budget[0]}}')">
+                <i class="fas fa-trash-alt"></i> Delete
+              </button>
+              <button class="btn btn-success" onclick="renewBudget('{{budget[1]}}','{{budget[2]}}','{{budget[3]}}','{{budget[4]}}','{{budget[5]}}')">
+                <i class="fas fa-sync-alt"></i> Renew
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  
+    <!-- Update Modal -->
+    <div id="updateSection" class="modal fade" tabindex="-1" aria-labelledby="updateSectionLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="updateSectionLabel">Update Budget</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="updateForm" onsubmit="handleUpdate(event)">
+              <div class="mb-1">
+                <label for="budgetId" class="form-label">Budget ID:</label>
+                <input type="text" id="budgetId" name="budgetId" class="form-control" disabled><br><br>
+              </div>
+              <div class="mb-1">
+                <label for="budgetAmount" class="form-label">Amount:</label>
+                <input type="number" id="budgetAmount" name="budgetAmount" class="form-control"><br><br>
+              </div>
+              <div class="mb-1">
+                <label for="budgetCategory" class="form-label">Category:</label>
+                <input type="text" id="budgetCategory" name="budgetCategory" class="form-control" disabled>
+              </div>
+              <div class="mb-1">
+                <label for="startDate" class="form-label">Start Date:</label>
+                <input type="date" id="startDate" name="startDate" class="form-control"><br><br>
+              </div>
+              <div class="mb-1">
+                <label for="endDate" class="form-label">End Date:</label>
+                <input type="date" id="endDate" name="endDate" class="form-control"><br><br>
+              </div>
+              <button type="submit" class="btn btn-primary">Update Budget</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Cancel</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+  </div>
+
+  <!-- Bootstrap JS (for modals and interactivity) -->
+  <script>
+    // Clear all filter inputs
+    function clearFilters() {
+      document.getElementById('start-date-filter').value = '';
+      document.getElementById('month-selector').value = '';
+      document.getElementById('category-selector').value = '';
+      document.getElementById('limit-filter').value = '';
+      document.getElementById('user-selector').value = '';
+      filterCards();
+    }
+  </script>
 </body>
 </html>

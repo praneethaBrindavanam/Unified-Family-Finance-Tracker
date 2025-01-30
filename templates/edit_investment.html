@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Investment</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .card {
+            border-radius: 12px;
+            border: none;
+        }
+        .card-header {
+            font-weight: bold;
+            font-size: 1.5rem;
+            text-transform: uppercase;
+        }
+        label {
+            font-weight: bold;
+            color: #495057;
+        }
+        .form-control, .form-select {
+            border-radius: 8px;
+        }
+        .btn {
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+<div class="container mt-5">
+    <div class="card shadow-lg">
+        <div class="card-header bg-primary text-white text-center">
+            Edit Investment
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('edit_investment', investment_id=investment.investment_id) }}">
+                
+                <div class="mb-3">
+                    <label for="investment_type" class="form-label">Investment Type</label>
+                    <select class="form-select" id="investment_type" name="investment_type" required>
+                        <option value="" disabled selected>Select Investment Type</option>
+                        <option value="stocks" {% if investment.investment_type == 'Stocks' %}selected{% endif %}>stocks</option>
+                        <option value="bonds" {% if investment.investment_type == 'Bonds' %}selected{% endif %}>bonds</option>
+                        <option value="real_estate" {% if investment.investment_type == 'Real Estate' %}selected{% endif %}>real_estate</option>
+                        <option value="mutual_funds" {% if investment.investment_type == 'Mutual Funds' %}selected{% endif %}>mutual_funds</option>
+                        <option value="savings_account" {% if investment.investment_type == 'Savings' %}selected{% endif %}>savings_account</option>
+                        <option value="fixed_deposit" {% if investment.investment_type == 'Fixed Deposit' %}selected{% endif %}>fixed_deposit</option>
+                    </select>
+                </div>
+
+                
+                <div class="mb-3">
+                    <label for="investment_name" class="form-label">Investment Name</label>
+                    <input type="text" class="form-control" id="investment_name" name="investment_name" value="{{ investment.investment_name }}" required>
+                </div>
+
+                <!-- Purchase Date -->
+                <div class="mb-3">
+                    <label for="purchase_date" class="form-label">Purchase Date</label>
+                    <input type="date" class="form-control" id="purchase_date" name="purchase_date" value="{{ investment.purchase_date }}" required>
+                </div>
+
+                <!-- Purchase Price -->
+                <div class="mb-3">
+                    <label for="purchase_price" class="form-label">Purchase Price</label>
+                    <input type="number" class="form-control" id="purchase_price" name="purchase_price" value="{{ investment.purchase_price }}" step="0.01" required>
+                </div>
+
+                <!-- Quantity -->
+                <div class="mb-3">
+                    <label for="quantity" class="form-label">Quantity</label>
+                    <input type="number" class="form-control" id="quantity" name="quantity" value="{{ investment.quantity }}" required>
+                </div>
+
+                <!-- ROI -->
+                <div class="mb-3">
+                    <label for="roi" class="form-label">Return on Investment (ROI %)</label>
+                    <input type="number" class="form-control" id="roi" name="roi" value="{{ investment.roi }}" step="0.01">
+                </div>
+
+                <!-- Returns -->
+                <div class="mb-3">
+                    <label for="current_value" class="form-label">current_value</label>
+                    <input type="number" class="form-control" id="current_value" name="current_value" value="{{ investment.current_value }}" step="0.01">
+                </div>
+
+                <!-- End Date -->
+                <div class="mb-3">
+                    <label for="end_date" class="form-label">End Date</label>
+                    <input type="date" class="form-control" id="end_date" name="end_date" value="{{ investment.end_date }}">
+                </div>
+
+                <!-- Info -->
+                <div class="mb-3">
+                    <label for="info" class="form-label">Additional Info</label>
+                    <textarea class="form-control" id="info" name="info" rows="4">{{ investment.info }}</textarea>
+                </div>
+
+                <!-- Buttons -->
+                <div class="text-center">
+                    <button type="submit" class="btn btn-success me-2 px-4">Save Changes</button>
+                    <a href="{{ url_for('view_investments') }}" class="btn btn-secondary px-4">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -42,7 +42,7 @@
             width: 100%;
         }
         button:hover {
-            background-color:#0d0d88 ;
+            background-color:#0d0d88;
         }
         .timer {
             margin-top: 10px;
@@ -64,7 +64,9 @@
 <body>
     <div class="form-container">
         <h2>OTP Verification</h2>
-        <input type="text" id="otp" placeholder="Enter OTP" required>
+        <input type="email" id="email" placeholder="Enter Email" required>
+        <button id="send-otp-btn" onclick="sendOtp()">Send OTP</button>
+        <input type="text" id="otp" placeholder="Enter OTP" required disabled>
         <button id="verify-btn" onclick="verifyOtp()" disabled>Verify OTP</button>
         <div class="timer" id="timer">Time left: 02:00</div>
         <div class="resend" id="resend-otp" onclick="resendOtp()">Resend OTP</div>
@@ -73,24 +75,56 @@
     <script>
         let timerInterval;
         let timeLeft = 120; // 2 minutes in seconds
+        let generatedOtp = ""; // Store OTP received from the backend
 
-        // Function to simulate sending OTP
-        function sendOtp() {
-            alert('OTP sent to your email. Please enter it within 2 minutes.');
+        // Send OTP
+        async function sendOtp() {
+            const email = document.getElementById('email').value;
 
-            startTimer();
+            if (!email) {
+                alert("Please enter an email address.");
+                return;
+            }
+
+            try {
+                const response = await fetch('/send_otp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email }),
+                });
+
+                const result = await response.json();
+                if (result.status === "success") {
+                    generatedOtp = result.otp; // Store OTP from backend
+                    alert("OTP sent to your email!");
+
+                    // Enable OTP input and Verify button
+                    document.getElementById("otp").disabled = false;
+                    document.getElementById("verify-btn").disabled = false;
+
+                    // Start timer
+                    startTimer();
+                } else {
+                    alert("Failed to send OTP. Please try again.");
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("An error occurred while sending OTP.");
+            }
         }
 
-        // Function to resend OTP
+        // Resend OTP
         function resendOtp() {
-            clearInterval(timerInterval); // Clear any existing timer
-            timeLeft = 120; // Reset the timer
-            sendOtp(); // Resend OTP and start the timer
+            clearInterval(timerInterval); // Reset the timer
+            timeLeft = 120; // Reset time
+            sendOtp(); // Call the sendOtp function again
         }
 
-        // Start the timer
+        // Timer countdown
         function startTimer() {
-            document.getElementById("verify-btn").disabled = false;
+            clearInterval(timerInterval); // Clear any existing timer
 
             timerInterval = setInterval(() => {
                 const minutes = Math.floor(timeLeft / 60);
@@ -109,23 +143,19 @@
             }, 1000);
         }
 
-        // Simulate OTP verification
+        // Verify OTP
         function verifyOtp() {
             const otp = document.getElementById('otp').value;
 
-            // In a real application, verify the OTP with your backend
-            if (otp === "123456") { // Replace "123456" with dynamic OTP logic
+            if (otp === generatedOtp) { // Compare with stored OTP
                 clearInterval(timerInterval);
-                alert('OTP Verified!');
+                alert("OTP Verified!");
             } else if (otp === "") {
-                alert('Please enter the OTP.');
+                alert("Please enter the OTP.");
             } else {
-                alert('Invalid OTP. Please try again.');
+                alert("Invalid OTP. Please try again.");
             }
         }
-
-        // Automatically send OTP on page load
-        sendOtp();
     </script>
 </body>
 </html>

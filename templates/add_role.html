@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Role</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            text-align: center;
+        }
+        h2 {
+            color: #4CAF50;
+            margin-bottom: 20px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            background-color: #f4f7f6;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Add Role</h2>
+        <form action="/add_role" method="POST">
+            <input type="text" name="family_name" placeholder="Family Name" required>
+            <select name="role_name" required>
+                <option value="">Select Role</option>
+                <option value="HoF">Head of Family (HoF)</option>
+                <option value="Member">Member</option>
+                <option value="Viewer">Viewer</option>
+            </select>
+            <input type="text" id="family_code" name="family_code" placeholder="Family Code (Auto-generated or Enter)" readonly>
+            <button type="submit">Add Role</button>
+        </form>
+    </div>
+
+    <script>
+        // Auto-generate a random 6-digit family code **only if the input is empty**
+        document.addEventListener("DOMContentLoaded", function() {
+            let familyCodeInput = document.getElementById("family_code");
+            if (!familyCodeInput.value) {
+                familyCodeInput.value = Math.floor(100000 + Math.random() * 900000);
+            }
+        });
+    </script>
+    
