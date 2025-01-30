@@ -203,14 +203,22 @@ def login():
         username = request.form.get('username')
         password = request.form.get('password')
 
-        # Validate the user credentials
-        user = Profile.query.filter_by(username=username, password=password).first()
-        if user:
-            flash(f"Welcome, {user.username}!", "success")
-            return redirect('/welcome')  # Redirect to the welcome page
+        # Query for the user by username
+        user = Profile.query.filter_by(username=username).first()
+
+        # Make sure the user exists, password matches, and id/family_head_id are set
+        if user and user.check_password(password):
+            # Check if user has a valid id and family_head_id
+            if Profile.id and Profile.family_head_id:
+                flash(f"Welcome, {Profile.username}!", "success")
+                return redirect('/navigationbar')
+            else:
+                flash("User is missing an ID or Family Head ID.", "error")
+                return redirect('/login')
         else:
             flash("Invalid username or password. Please try again.", "error")
-            return redirect('/login')  # Redirect back to the login page for retry
+            return redirect('/login')
+
     return render_template('login.html')
 
 
@@ -231,6 +239,7 @@ def add_data():
 # Function to handle profile addition
 @app.route('/add', methods=["POST"])
 def add_profile():
+    id=request.form.get("id")
     username = request.form.get("username")
     email = request.form.get("email")
     family_name = request.form.get("family_name")
@@ -240,6 +249,7 @@ def add_profile():
 
     if username and email and family_name and role and family_head_id and password:
         new_profile = Profile(
+            id=id,
             username=username,
             email=email,
             family_name=family_name,
@@ -294,14 +304,11 @@ def add_role():
         except Exception as e:
             print(f"Error: {e}")  # Debugging
             db.session.rollback()
-        return redirect('/welcome')
+        return redirect('/navigationbar')
     else:
         return redirect('/add_role_data')
 
 
-@app.route('/welcome')
-def welcome():
-    return render_template('welcome.html')
 
 @app.route('/delete')
 def delete():
