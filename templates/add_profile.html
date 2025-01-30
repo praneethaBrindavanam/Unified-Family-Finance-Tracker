@@ -98,14 +98,14 @@
 </head>
 <body>
   <div class="container">
-    <form class="form-card">
+    <form class="form-card" id="profileForm">
       <h2>Create Profile</h2>
-      
+    
       <label for="username">Username:</label>
-      <input type="text" id="username" placeholder="Enter your username">
+      <input type="text" id="username" placeholder="Enter your username" required>
 
       <label for="email">Email:</label>
-      <input type="email" id="email" placeholder="Enter your email">
+      <input type="email" id="email" placeholder="Enter your email" required>
 
       <label for="family-name">Family Name:</label>
       <input type="text" id="family-name" placeholder="Enter your family name">
@@ -117,12 +117,21 @@
       <input type="text" id="family-head-id" placeholder="Enter Family Head ID">
 
       <label for="password">Password:</label>
-      <input type="password" id="password" placeholder="Enter your password">
+      <input type="password" id="password" placeholder="Enter your password" required>
       
       <button type="submit" class="submit-btn">Create Profile</button>
 
-      <p class="login-link">Already have an account? <a href="#">Login here</a></p>
+      <p class="login-link">Already have an account? <a href="/login">Login here</a></p>
     </form>
   </div>
+
+  <script>
+    document.getElementById("profileForm").addEventListener("submit", function(event) {
+      event.preventDefault(); // Prevent default form submission
+
+      // Simulate success and redirect
+      window.location.href = "/add_role_data"; // Change this to your actual next page URL
+    });
+  </script>
 </body>
 </html>
