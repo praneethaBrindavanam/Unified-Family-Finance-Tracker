@@ -200,25 +200,18 @@ def home():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form.get('username')
+        email = request.form.get('email')
         password = request.form.get('password')
-
-        # Query for the user by username
-        user = Profile.query.filter_by(username=username).first()
-
-        # Make sure the user exists, password matches, and id/family_head_id are set
-        if user and user.check_password(password):
-            # Check if user has a valid id and family_head_id
-            if Profile.id and Profile.family_head_id:
-                flash(f"Welcome, {Profile.username}!", "success")
-                return redirect('/navigationbar')
-            else:
-                flash("User is missing an ID or Family Head ID.", "error")
-                return redirect('/login')
+        user = Profile.query.filter_by(email=email).first()
+        id = login(email, password)
+        user = Profile.query.filter_by(email=email).first()
+        if id:  # If user_id is returned, login is successful
+            flask_session['id'] =user.id  # Store user_id in session
+            flask_session['role']=user.role
+            flask_session['family_head_id'] = user.family_head_id
+            return redirect(url_for('navigationbar'))
         else:
-            flash("Invalid username or password. Please try again.", "error")
-            return redirect('/login')
-
+            flash("Invalid email or password.", "danger")
     return render_template('login.html')
 
 
