@@ -19,6 +19,7 @@ import pandas as pd
 from flask import session as flask_session
 from sqlalchemy import Table, Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
+
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'Recipt_uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -1235,7 +1236,7 @@ def get_user_data(query, user_id=None, is_family_head=False):
         return query.filter_by(user_id=user_id).all()
 
 def fetch_budgets(start_date=None, end_date=None, category_id=None):
-    user_id = flask_session.get('user_id')  # Retrieving user_id from session
+    user_id = flask_session.get('user_id') 
     query = Budget.query.filter_by(user_id=user_id)
 
     # Apply filters
@@ -1318,40 +1319,39 @@ def fetch_savings_goals(start_date=None, end_date=None, status=None):
 
 @app.route('/budget')
 def budget():
-    # Get the user role and user ID from the session
     role = flask_session.get('role')
     user_id = flask_session.get('user_id')
     
-    # Fetch budget data
     budgets = fetch_budgets()
     filtered_budgets=''
 
     if role == 'FamilyHead':
-        # If the user is a FamilyHead, show all data
         filtered_budgets = budgets
     else:
-        # If the user is a regular user, show only their personal data
         filtered_budgets = budgets[budgets['user_id'] == user_id]
         print(filtered_budgets)
-
-    categories = filtered_budgets['category_id'].unique()
+        query = text("""
+        SELECT DISTINCT c.category_name 
+        FROM categories c
+        JOIN budgets b ON c.category_id = b.category_id
+        WHERE b.user_id = :user_id
+        """)
+    result = db.session.execute(query, {"user_id": user_id})
+    categories = [row.category_name for row in result]
+    print("Categories:", categories)
     return render_template('budgetfilter.html', categories=categories, budgets=filtered_budgets)
 
 
 @app.route('/savings')
 def savings():
-    # Get the user role and user ID from the session
     role = flask_session.get('role')
     user_id = flask_session.get('user_id')
 
-    # Fetch savings goal data
     savings_goals = fetch_savings_goals()
 
     if role == 'FamilyHead':
-        # If the user is a FamilyHead, show all data
         filtered_savings = savings_goals
     else:
-        # If the user is a regular user, show only their personal data
         filtered_savings = savings_goals[savings_goals['User_id'] == user_id]
 
     statuses = filtered_savings['Goal_status'].unique()
@@ -1359,21 +1359,24 @@ def savings():
 
 @app.route('/expense')
 def expense():
-    # Get the user role and user ID from the session
     role = flask_session.get('role')
     user_id = flask_session.get('user_id')
 
-    # Fetch expense data
     expenses = fetch_expenses()
 
     if role == 'FamilyHead':
-        # If the user is a FamilyHead, show all data
         filtered_expenses = expenses
     else:
-        # If the user is a regular user, show only their personal data
         filtered_expenses = expenses[expenses['UserID'] == user_id]
-
-    categories = filtered_expenses['categoryid'].unique()
+        query = text("""
+        SELECT DISTINCT c.category_name 
+        FROM categories c
+        JOIN expenses b ON c.category_id = b.categoryid
+        WHERE b.UserID = :user_id
+        """)
+    
+    result = db.session.execute(query, {"user_id": user_id})
+    categories = [row.category_name for row in result]
     return render_template('expenses.html', categories=categories, expenses=filtered_expenses)
 
 
@@ -1674,6 +1677,132 @@ def download_consolidated():
         f.write("\n")
 
     return send_file(file_path, as_attachment=True)
+
+
+@app.route('/test_email')
+def email_form():
+    return render_template('email_form.html')
+
+# Route to handle form submission and send email
+
+
+@app.route('/send_report_email', methods=['POST'])
+def send_report_email_route():
+    recipient_email = request.form.get('email')
+    report_type = request.form.get('report_type')  # 'expenses', 'budgets', 'savings'
+    
+    
+    # Generate the report
+    if report_type == 'expenses':
+        df = fetch_expenses()
+        file_path = 'data/expenses_report.csv'
+    elif report_type == 'budgets':
+        df = fetch_budgets()
+        file_path = 'data/budgets_report.csv'
+    elif report_type == 'savings':
+        df = fetch_savings_goals()
+        file_path = 'data/savings_report.csv'
+    else:
+        return jsonify({'error': 'Invalid report type'}), 400
+
+    os.makedirs('data', exist_ok=True)
+    df.to_csv(file_path, index=False)
+    html_table = tabulate(df, headers='keys', tablefmt='pretty', showindex=False)
+
+# Email credentials
+    sender_email = "hemanth4203@gmail.com"  # Replace with your email
+    sender_password = "yqye zeyn odec xrsk"        # Replace with your email password
+    smtp_server = "smtp.gmail.com"         # Replace with your email provider's SMTP server
+    smtp_port = 587                          # Typically 587 for TLS
+
+
+    subject = f'{report_type}'
+    body = f'{html_table}'
+
+
+# Create the email
+    message = MIMEMultipart()
+    message["From"] = sender_email
+    message["To"] = recipient_email
+    message["Subject"] = subject
+    message.attach(MIMEText(body, "plain"))
+
+# Send the email
+    try:
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()  # Secure the connection
+            server.login(sender_email, sender_password)
+            server.sendmail(sender_email, recipient_email, message.as_string())
+        print(f"Email sent successfully to {recipient_email}")
+    except Exception as e:
+        print(f"Failed to send email: {e}")  
+    return jsonify({'message': 'Email sent successfully'}), 200
+
+@app.route('/scorecards')
+def scorecards():
+    user_id = request.args.get('user_id', default=2, type=int )  # Default to 2 for testing
+    month = request.args.get('month', default=pd.to_datetime('now').month, type=int)
+    year = request.args.get('year', default=pd.to_datetime('now').year, type=int)
+
+    # Monthly calculations
+    monthly_start_date = pd.to_datetime(f"{year}-{month}-01")
+    monthly_end_date = monthly_start_date + pd.offsets.MonthEnd(1)
+
+    budget_df = fetch_budgets(start_date=monthly_start_date, end_date=monthly_end_date, user_id=user_id)
+    monthly_budget = budget_df['limit'].sum() if not budget_df.empty else 0
+
+    # Fetch savings goals for monthly calculations
+    savings_goals_df = fetch_savings_goals(start_date=monthly_start_date, end_date=monthly_end_date, user_id=user_id)
+    monthly_savings = savings_goals_df['Achieved_amount'].sum() if not savings_goals_df.empty else 0
+    monthly_goals = savings_goals_df['Achieved_amount'].sum() if not savings_goals_df.empty else 0
+
+    # Fetch expenses for monthly calculations
+    monthly_expense_df = fetch_expenses(start_date=monthly_start_date, end_date=monthly_end_date, user_id=user_id)
+    monthly_expenses = monthly_expense_df['amount'].sum() if not monthly_expense_df.empty else 0
+
+    # Calculate monthly percentage
+    monthly_percentage = (monthly_savings / monthly_budget * 100) if monthly_budget > 0 else 0
+
+    # Yearly calculations
+    yearly_start_date = pd.to_datetime(f"{year}-01-01")
+    yearly_end_date = pd.to_datetime(f"{year}-12-31")
+
+
+    yearly_budget_df = fetch_budgets(start_date=yearly_start_date, end_date=yearly_end_date, user_id=user_id)
+    yearly_budget = yearly_budget_df['limit'].sum() if not yearly_budget_df.empty else 0
+
+
+    # Fetch savings goals for yearly calculations
+    yearly_savings_goals_df = fetch_savings_goals(start_date=yearly_start_date, end_date=yearly_end_date, user_id=user_id)
+    yearly_savings = yearly_savings_goals_df['Achieved_amount'].sum() if not yearly_savings_goals_df.empty else 0
+    yearly_goals = yearly_savings_goals_df['Target_amount'].sum() if not yearly_savings_goals_df.empty else 0
+
+    # Fetch expenses for yearly calculations
+    yearly_expense_df = fetch_expenses(start_date=yearly_start_date, end_date=yearly_end_date, user_id=user_id)
+    yearly_expenses = yearly_expense_df['amount'].sum() if not yearly_expense_df.empty else 0
+
+    # Calculate yearly percentage
+    overallscore=monthly_budget+monthly_expenses+monthly_savings
+    overall_yearly=yearly_expenses+yearly_savings+yearly_budget
+    yearly_percentage = (yearly_expenses / yearly_budget * 100) if yearly_budget > 0 else 0
+
+    # Get the current date
+    now = datetime.now()
+
+    return render_template('scorecards.html', 
+                           monthly_budget=monthly_budget, 
+                           monthly_savings=monthly_savings, 
+                           monthly_expenses=monthly_expenses,
+                           yearly_budget=yearly_budget, 
+                           yearly_savings=yearly_savings, 
+                           yearly_expenses=yearly_expenses,
+                           overallscore=overallscore,
+                           overall_yearly=overall_yearly,
+                           now=now,
+                           monthly_goals=monthly_goals,
+                           yearly_goals=yearly_goals,
+                           monthly_percentage=monthly_percentage,
+                           yearly_percentage=yearly_percentage)
 
 if __name__ == '__main__':
     app.run(debug=True)
