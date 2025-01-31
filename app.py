@@ -1337,7 +1337,8 @@ def budget():
         WHERE b.user_id = :user_id
         """)
     result = db.session.execute(query, {"user_id": user_id})
-    categories = [row.category_name for row in result]
+    #categories = [row.category_name for row in result]
+    categories = [{"category_id": row.category_id, "category_name": row.category_name} for row in result]
     print("Categories:", categories)
     return render_template('budgetfilter.html', categories=categories, budgets=filtered_budgets)
 
@@ -1376,7 +1377,8 @@ def expense():
         """)
     
     result = db.session.execute(query, {"user_id": user_id})
-    categories = [row.category_name for row in result]
+    #categories = [row.category_name for row in result]
+    categories = [{"categoryid": row.categoryid, "category_name": row.category_name} for row in result]
     return render_template('expenses.html', categories=categories, expenses=filtered_expenses)
 
 
@@ -1393,7 +1395,10 @@ def filter_budgets():
 
     df = fetch_budgets(start_date=start_date, end_date=end_date, category_id=category_id)
     return jsonify(df.to_dict(orient='records'))
-
+    
+def fetch_categories():
+    query = "SELECT category_id, category_name FROM categories"
+    return pd.read_sql(query, con=db.engine)
 
 # Route to generate and send plots
 @app.route('/generate_budget_plot', methods=['POST'])
@@ -1404,11 +1409,14 @@ def generate_budget_plot():
     end_date = filters.get('end_date')
     category_id = filters.get('category_id')
     df = fetch_budgets(start_date=start_date, end_date=end_date, category_id=category_id)
+    categories_df = fetch_categories()  # Assuming this fetches `category_id` and `category_name`
     
+    # Merge category names into the budgets dataframe
+    df = df.merge(categories_df, on='category_id', how='left')
 
     # Pie Chart: Budget distribution by category
     if plot_type == 'pie':
-        category_sums = df.groupby('category_id')['limit'].sum()
+        category_sums = df.groupby('category_name')['limit'].sum()
         print("category_sums",category_sums)
         plt.figure(figsize=(8, 6))
         category_sums.plot.pie(autopct='%1.1f%%', startangle=90, cmap='tab20', ylabel='')
@@ -1416,7 +1424,7 @@ def generate_budget_plot():
     
     # Bar Chart: Budget limit comparison by category
     elif plot_type == 'bar':
-        category_sums = df.groupby('category_id')['limit'].sum()
+        category_sums = df.groupby('category_name')['limit'].sum()
         plt.figure(figsize=(8, 6))
         category_sums.plot.bar(color='skyblue', edgecolor='black')
         plt.title('Budget Limit by Category')
@@ -1430,12 +1438,12 @@ def generate_budget_plot():
         df.sort_values('start_date', inplace=True)
 
     # Group by 'start_date' and 'category_id', summing 'limit'
-        grouped = df.groupby(['start_date', 'category_id'])['limit'].sum().reset_index()
+        grouped = df.groupby(['start_date', 'category_name'])['limit'].sum().reset_index()
 
     # Plot each category's data
         plt.figure(figsize=(10, 6))
-        for category in grouped['category_id'].unique():
-            category_data = grouped[grouped['category_id'] == category]
+        for category in grouped['category_name'].unique():
+            category_data = grouped[grouped['category_name'] == category]
             plt.plot(
                 category_data['start_date'], 
                 category_data['limit'], 
