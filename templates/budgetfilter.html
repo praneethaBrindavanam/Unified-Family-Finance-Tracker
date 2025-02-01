@@ -22,7 +22,7 @@
             <select id="budget_category" name="category">
                 <option value="">All Categories</option>
                 {% for category in categories %}
-                <option value="{{ category }}">{{ category }}</option>
+                <option value="{{ category.category_id }}">{{ category.category_name }}-{{category.category_id}}</option>
                 {% endfor %}
             </select>
 
@@ -47,7 +47,7 @@
             const startDate = document.getElementById('budget_start_date').value;
             const endDate = document.getElementById('budget_end_date').value;
             const category_id = document.getElementById('budget_category').value;
-            filters = { start_date: startDate, end_date: endDate, category_id };
+            filters = { start_date: startDate, end_date: endDate, category_id:category_id };
         }
 
         function generateBudgetPlot(type) {

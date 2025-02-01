@@ -22,7 +22,7 @@
             <select id="category" name="category">
                 <option value="expense">All Categories</option>
                 {% for category in categories %}
-                <option value="{{ category }}">{{ category }}</option>
+                <option value="{{ category.categoryid }}">{{ category.category_name }}-{{category.categoryid}}</option>
                 {% endfor %}
             </select>
 
