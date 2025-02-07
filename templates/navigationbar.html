@@ -20,7 +20,7 @@
             
         }
         .nav {
-            background-color: #BD6C73; /* Steel Blue for navigation background */
+            background-color: #0d0d88; /* Steel Blue for navigation background */
             padding: 10px;
             height: 80px;
         }
@@ -33,7 +33,7 @@
             font-weight: bold;
         }
         .nav-link:hover {
-            color: #BD6C73; /* Rosewood for hover effect */
+            color: #0d0d88; /* Rosewood for hover effect */
         }
         .nav-link.active {
             background-color: #6B597F; /* Mauve for active links */
@@ -53,34 +53,35 @@
 </head>
 <body>
     <ul class="nav justify-content-end">
-        <li class="nav-item">
-            <img src="/homeimage.webp" alt="HOME">
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="{{url_for('navigationbar')}}">HOME</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" aria-current="page" href="{{url_for('show_expenses')}}">Expense Management</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="{{url_for('budgethome')}}">Budget Management</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="{{url_for('savings_goals')}}">Savings Goals Management</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="{{url_for('mod5sprint2')}}">Report Visualization</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('delete_all_roles') }}">Logout</a>
-        </li>
-    </ul>
-    <div style="background-color: #A2869C;"></div>
+    <li class="nav-item">
+        <img src="/homeimage.webp" alt="HOME">
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{{url_for('navigationbar')}}">HOME</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" aria-current="page" href="{{url_for('show_expenses')}}">Expense Management</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{{url_for('budgethome')}}">Budget Management</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{{url_for('savings_goals')}}">Savings Goals Management</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{{url_for('mod5sprint2')}}">Report Visualization</a>
+    </li>
+    
+    
+
+    </li>
+</ul>
+   <div style="background-color: #0d0d88;"></div>
     <div style="margin: 0 auto 0 auto;
     margin-top: 300px;
     margin-left:400px;">
       <h1>Welcome to the Unified Family Finance Tracker</h1>
     </div>
-    <div style="background-color: #A2869C;"></div>
+    <div style="background-color: #0d0d88;"></div>
 </body>
 </html>

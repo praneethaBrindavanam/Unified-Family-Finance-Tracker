@@ -19,7 +19,7 @@ otp = randint(000000,999999)
 
 @app.route("/")
 def index():
-    return render_template("verify_otp.html")
+    return render_template("verification.html")
 
 @app.route('/verify',methods = ["POST"])
 def verify():

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Open Sans", Arial, sans-serif;
+        background-color: #ffffff;
+        color: #333333;
+        margin: 0;
+        padding: 0;
+      }
+
+      h1,
+      h2 {
+        text-align: center;
+        font-size: 2rem;
+        color: #0047ab;
+        margin-top: 1rem;
+        text-transform: uppercase;
+      }
+
+      h2 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .goal-details {
+        width: 90%;
+        margin: 0 auto;
+        background-color: #f9f9f9;
+        padding: 1rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .goal-details p {
+        font-size: 1rem;
+        margin: 0.5rem 0;
+        line-height: 1.5;
+      }
+
+      table {
+        width: 90%;
+        margin: 2rem auto;
+        border-collapse: collapse;
+        text-align: left;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      th {
+        background-color: #00a86b;
+        color: white;
+        padding: 0.8rem;
+        text-align: center;
+      }
+
+      td {
+        padding: 0.8rem;
+        text-align: center;
+        border: 1px solid #dddddd;
+      }
+
+      tr:nth-child(even) {
+        background-color: #f9f9f9;
+      }
+
+      tr:nth-child(odd) {
+        background-color: #ffffff;
+      }
+
+      tr:hover {
+        background-color: #f1f1f1;
+      }
+    </style>
+    <title>View Contributions</title>
+  </head>
+  <body>
+    <h1>Goal Contributions</h1>
+
+    <div class="goal-details">
+      <h2>Goal Details</h2>
+      <p><strong>Goal Description:</strong> {{ goal.Goal_description }}</p>
+      <p><strong>Start Date:</strong> {{ goal.Start_date }}</p>
+      <p><strong>End Date:</strong> {{ goal.End_date }}</p>
+      <p><strong>Target Amount:</strong> {{ goal.Target_amount }}</p>
+      <p><strong>Achieved Amount:</strong> {{ goal.Achieved_amount }}</p>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>User ID</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Contribution Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for contribution in contributions %}
+        <tr>
+          <td>{{ contribution.user_id }}</td>
+          <td>{{ contribution.name }}</td>
+          <td>{{ contribution.email }}</td>
+          <td>{{ contribution.contribution_amount }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>View Contributions</title>
+  </head>
+  <body>
+    <h1>Your Contributions</h1>
+    <table border="1">
+      <thead>
+        <tr>
+          <th>Goal Description</th>
+          <th>Start Date</th>
+          <th>End Date</th>
+          <th>Target Amount</th>
+          <th>Achieved Amount</th>
+          <th>Contribution Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for contribution in contributions %}
+        <tr>
+          <td>{{ contribution.Goal_description }}</td>
+          <td>{{ contribution.Start_date }}</td>
+          <td>{{ contribution.End_date }}</td>
+          <td>{{ contribution.Target_amount }}</td>
+          <td>{{ contribution.Achieved_amount }}</td>
+          <td>{{ contribution.contribution_amount }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </body>
+</html>

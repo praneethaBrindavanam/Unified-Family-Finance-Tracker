@@ -126,10 +126,23 @@
   </div>
 
   <script>
-    document.getElementById("profileForm").addEventListener("submit", function(event) {
+    document.getElementById("profileForm").addEventListener("submit",async  function(event) {
       event.preventDefault(); // Prevent default form submission
-
-      // Simulate success and redirect
+      const response=await fetch('http://127.0.0.1:5000/add',{
+                method:"POST",
+                headers:{
+                    "Content-Type": "application/json",
+                },
+                body:JSON.stringify({
+                    email:document.getElementById('email').value,
+                    password:document.getElementById('password').value,
+                    name:document.getElementById('username').value,
+                    family_head_id:document.getElementById('family-head-id').value,
+                    role:document.getElementById('role').value,
+                    family_name:document.getElementById('family-name').value,
+                })
+            })
+      if(response)      
       window.location.href = "/add_role_data"; // Change this to your actual next page URL
     });
   </script>

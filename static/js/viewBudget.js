@@ -1,6 +1,6 @@
 async function deleteBudget(id) {
   if (confirm("Are you sure?")) {
-    const response = await fetch("http://127.0.0.1:5000/Budget", {
+    const response = await fetch("/Budget", {
       headers: {
         "Content-Type": "application/json",
       },
@@ -53,7 +53,7 @@ async function handleUpdate(event) {
   };
 
   try {
-    const response = await fetch("http://127.0.0.1:5000/Budget", {
+    const response = await fetch("/Budget", {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -97,7 +97,7 @@ async function renewBudget(category_id,limit,start_date,end_date,user_id){
     const new_end_date=new Date(new_start_date)
     new_end_date.setTime(new_start_date.getTime()+duration)
     try {
-      const response = await fetch("http://127.0.0.1:5000/Budget", {
+      const response = await fetch("/Budget", {
           method: "POST",
           headers: {
               "Content-Type": "application/json"

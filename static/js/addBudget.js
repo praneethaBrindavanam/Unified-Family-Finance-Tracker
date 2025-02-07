@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             console.log("Submitting Budget:", { category_id, limit, start_date, end_date });
 
-            const response = await fetch("http://127.0.0.1:5000/Budget", {
+            const response = await fetch("/Budget", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

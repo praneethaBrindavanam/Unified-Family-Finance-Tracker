@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OTP Verification</title>
+</head>
+
+<body>
+
+<form action ="/validate" method ="POST">
+
+<h4> One-time password has been sent to the email id. Please check the
+email for the verification.</h4>
+
+Enter OTP: <input type="text" name="otp">
+
+
+<input type="submit" value="Submit">
+
+
+
+<a href="{{ url_for('login') }}"><button class="login">Log In</button></a>
+</form>
+</body>
+</html>
