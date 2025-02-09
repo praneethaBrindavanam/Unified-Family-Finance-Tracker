@@ -20,7 +20,7 @@
 
             <label for="category">Category:</label>
             <select id="category" name="category">
-                <option value="expense">All Categories</option>
+                <option value="">All Categories</option>
                 {% for category in categories %}
                 <option value="{{ category.categoryid }}">{{ category.category_name }}-{{category.categoryid}}</option>
                 {% endfor %}
@@ -31,10 +31,10 @@
         </form>
 
         <div class="controls">
-            <button onclick="generateExpensePlot('pie')">Expense distribution by category</button>
-            <button onclick="generateExpensePlot('bar')">Expense amounts by category</button>
-            <button onclick="generateExpensePlot('line')">Expense trends over time</button>
-            <a href="/download_expenses_csv" class="btn">Download CSV</a>
+            <button id="pie">Expense distribution by category</button>
+            <button id="bar">Expense amounts by category</button>
+            <button id="line">Expense trends over time</button>
+         <!--  <a href="/download_expenses_csv" class="btn">Download CSV</a>         --> 
         </div>
         <div class="plot-container">
             <img id="expense-plot" src="">
@@ -42,11 +42,18 @@
     </div>
 
     <script>
+        let filters = {};
+        function updateFilters() {
+            const startDate = document.getElementById('start_date').value;
+            const endDate = document.getElementById('end_date').value;
+            const category_id = document.getElementById('category').value;
+            filters = { start_date: startDate, end_date: endDate, category_id:category_id };
+        }
         function generateExpensePlot(type) {
             fetch('/generate_expense_plot', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ plot_type: type })
+                body: JSON.stringify({ ...filters,plot_type: type })
             })
                 .then(response => response.blob())
                 .then(blob => {
@@ -56,14 +63,12 @@
         }
 
         document.getElementById('filterButton').addEventListener('click', () => {
-            const startDate = document.getElementById('start_date').value;
-            const endDate = document.getElementById('end_date').value;
-            const category = document.getElementById('category').value;
+            updateFilters();
 
             fetch('/filter_expenses', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ start_date: startDate, end_date: endDate, category })
+                body: JSON.stringify(filters)
             })
                 .then(response => response.json())
                 .then(data => {
@@ -73,14 +78,12 @@
         });
 
         document.getElementById('exportButton').addEventListener('click', () => {
-            const startDate = document.getElementById('start_date').value;
-            const endDate = document.getElementById('end_date').value;
-            const category = document.getElementById('category').value;
+            updateFilters();
 
             fetch('/export_expenses_csv', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ start_date: startDate, end_date: endDate, category })
+                body: JSON.stringify(filters)
             })
                 .then(response => response.blob())
                 .then(blob => {
@@ -90,6 +93,27 @@
                     a.download = 'filtered_expenses.csv';
                     a.click();
                 });
+        });
+
+        document.getElementById('pie').addEventListener('click', () => {
+            generateExpensePlot('pie');
+        });
+
+        document.getElementById('bar').addEventListener('click', () => {
+            generateExpensePlot('bar');
+        });
+
+        document.getElementById('line').addEventListener('click', () => {
+            generateExpensePlot('line');
+        });
+
+        document.getElementById('downloadCSVLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            updateFilters();
+
+            const queryParams = new URLSearchParams(filters).toString();
+            const downloadUrl = `/download_expenses_csv?${queryParams}`;
+            window.location.href = downloadUrl;
         });
 
     </script>

@@ -5,6 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Send Report Email</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <style>
+        
+        /* Custom styles */
+        body {
+            background-color: lightblue; /* Light background */
+            color: #333; /* Dark text for contrast */
+        }
+
+        header {
+            background-color: #007BFF; /* Blue */
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 5px solid #FF6F20; /* Orange border */
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .form-label {
+            font-weight: bold;
+        }
+
+        .btn-primary {
+            background-color: #FF6F20; /* Orange */
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: #FF8C40; /* Lighter orange on hover */
+        }
+
+        .alert {
+            margin-top: 20px;
+        }
+
+        .container {
+            margin-top: 50px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+    
+    </style>
 </head>
 <body>
     <div class="container mt-5">
@@ -31,7 +78,7 @@
     <script>
         const form = document.getElementById('emailForm');
         const responseMessage = document.getElementById('responseMessage');
-
+    
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData = new FormData(form);
@@ -39,7 +86,7 @@
                 method: 'POST',
                 body: formData,
             });
-
+    
             const result = await response.json();
             if (response.ok) {
                 responseMessage.innerHTML = `<div class="alert alert-success">${result.message}</div>`;

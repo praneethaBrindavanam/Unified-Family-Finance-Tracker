@@ -177,7 +177,7 @@
         </ul>
     </nav>
     <div class="container mt-5">
-        <h2 class="text-center" style="color: #fff;">Expenses</h2>
+        <h2 class="text-center" style="color: #000000;">Expenses</h2>
         <div class="text-center mb-3">
             <a href="/add_expenses" class="btn btn-primary">Add New Expense</a>
         </div>
@@ -185,50 +185,54 @@
             <form method="GET" action="{{ url_for('show_expenses') }}" style="margin: 0;">
                 <div class="filters d-flex justify-content-between align-items-center flex-wrap">
                     <!-- Month Filter -->
-                    <div class="form-group">
-                        <label for="month" class="text-white small">Month:</label>
-                        <select id="month" name="month" class="form-control form-control-sm" onchange="this.form.submit()">
-                            <option value="">All</option>
-                            {% for month in months %}
-                                <option value="{{ month }}" {% if selected_month == month %}selected{% endif %}>
-                                    {{ month }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <!-- Start Date Filter -->
-                    <div class="form-group">
-                        <label for="start_date" class="text-white small">Start Date:</label>
-                        <input type="date" id="start_date" name="start_date" value="{{ start_date }}" class="form-control form-control-sm" onchange="this.form.submit()">
-                    </div>
-                    <!-- End Date Filter -->
-                    <div class="form-group">
-                        <label for="end_date" class="text-white small">End Date:</label>
-                        <input type="date" id="end_date" name="end_date" value="{{ end_date }}" class="form-control form-control-sm" onchange="this.form.submit()">
-                    </div>
-                    <!-- Category Filter -->
-                    <div class="form-group">
-                        <label for="category" class="text-white small">Category:</label>
-                        <select name="category" id="category" class="form-control form-control-sm" onchange="this.form.submit()">
-                            <option value="">All</option>
-                            {% for category in user_categories %}
-                                <option value="{{ category.category_id }}" {% if category.category_id == selected_category %}selected{% endif %}>
-                                    {{ category.category_name }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <!-- Amount Range Filter -->
-                    <div class="form-group">
-                        <label for="amountRange" class="text-white small">Amount Range:</label>
-                        <div>
-                            <input type="range" id="minAmountRange" class="form-range form-control-sm" min="{{ min_amount }}" max="{{ max_amount }}" step="5" value="{{ min_amount }}" onchange="updateAmountDisplay()">
-                            <input type="range" id="maxAmountRange" class="form-range form-control-sm" min="{{ min_amount }}" max="{{ max_amount }}" step="5" value="{{ max_amount }}" onchange="updateAmountDisplay()">
-                        </div>
-                        <div id="amountDisplay" class="text-white small mt-4">
-                            <span id="minAmountDisplay">₹{{ min_amount }}</span> - <span id="maxAmountDisplay">₹{{ max_amount }}</span>
-                        </div>
-                    </div>
+<div class="form-group">
+    <label for="month" class="text-black small" style="color: #000000; font-weight: bold;">Month:</label>
+    <select id="month" name="month" class="form-control form-control-sm" onchange="this.form.submit()">
+        <option value="">All</option>
+        {% for month in months %}
+            <option value="{{ month }}" {% if selected_month == month %}selected{% endif %}>
+                {{ month }}
+            </option>
+        {% endfor %}
+    </select>
+</div>
+
+<!-- Start Date Filter -->
+<div class="form-group">
+    <label for="start_date" class="text-black small" style="color: #000000; font-weight: bold;">Start Date:</label>
+    <input type="date" id="start_date" name="start_date" value="{{ start_date }}" class="form-control form-control-sm" onchange="this.form.submit()">
+</div>
+
+<!-- End Date Filter -->
+<div class="form-group">
+    <label for="end_date" class="text-black small" style="color: #000000; font-weight: bold;">End Date:</label>
+    <input type="date" id="end_date" name="end_date" value="{{ end_date }}" class="form-control form-control-sm" onchange="this.form.submit()">
+</div>
+
+<!-- Category Filter -->
+<div class="form-group">
+    <label for="category" class="text-black small" style="color: #000000; font-weight: bold;">Category:</label>
+    <select name="category" id="category" class="form-control form-control-sm" onchange="this.form.submit()">
+        <option value="">All</option>
+        {% for category in user_categories %}
+            <option value="{{ category.category_id }}" {% if category.category_id == selected_category %}selected{% endif %}>
+                {{ category.category_name }}
+            </option>
+        {% endfor %}
+    </select>
+</div>
+
+<!-- Amount Range Filter -->
+<div class="form-group">
+    <label for="amountRange" class="text-black small" style="color: #000000; font-weight: bold;">Amount Range:</label>
+    <div>
+        <input type="range" id="minAmountRange" class="form-range form-control-sm" min="{{ min_amount }}" max="{{ max_amount }}" step="5" value="{{ min_amount }}" onchange="updateAmountDisplay()">
+        <input type="range" id="maxAmountRange" class="form-range form-control-sm" min="{{ min_amount }}" max="{{ max_amount }}" step="5" value="{{ max_amount }}" onchange="updateAmountDisplay()">
+    </div>
+    <div id="amountDisplay" class="text-black small mt-4" style="color: #000000; font-weight: bold;">
+        <span id="minAmountDisplay">₹{{ min_amount }}</span> - <span id="maxAmountDisplay">₹{{ max_amount }}</span>
+    </div>
+</div>
                     <!-- Quick Filters -->
                     <div class="quick-filters d-flex align-items-center">
                         <a href="{{ url_for('show_expenses', time_period='last_10_days', category=selected_category) }}" 

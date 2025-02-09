@@ -6,3 +6,5 @@ NumPy
 matplotlib
 cryptography
 Flask-Mail
+SQLAlchemy
+Werkzeug
