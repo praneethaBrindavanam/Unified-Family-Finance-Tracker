@@ -1,114 +1,95 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Investment</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <style>
-        body {
-            background-color: #f8f9fa;
-        }
-        .card {
-            border-radius: 12px;
-            border: none;
-        }
-        .card-header {
-            font-weight: bold;
-            font-size: 1.5rem;
-            text-transform: uppercase;
-        }
-        label {
-            font-weight: bold;
-            color: #495057;
-        }
-        .form-control, .form-select {
-            border-radius: 8px;
-        }
-        .btn {
-            border-radius: 8px;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 <body>
-<div class="container mt-5">
-    <div class="card shadow-lg">
-        <div class="card-header bg-primary text-white text-center">
-            Edit Investment
-        </div>
-        <div class="card-body">
-            <form method="POST" action="{{ url_for('edit_investment', investment_id=investment.investment_id) }}">
-                
-                <div class="mb-3">
-                    <label for="investment_type" class="form-label">Investment Type</label>
-                    <select class="form-select" id="investment_type" name="investment_type" required>
-                        <option value="" disabled selected>Select Investment Type</option>
-                        <option value="stocks" {% if investment.investment_type == 'Stocks' %}selected{% endif %}>stocks</option>
-                        <option value="bonds" {% if investment.investment_type == 'Bonds' %}selected{% endif %}>bonds</option>
-                        <option value="real_estate" {% if investment.investment_type == 'Real Estate' %}selected{% endif %}>real_estate</option>
-                        <option value="mutual_funds" {% if investment.investment_type == 'Mutual Funds' %}selected{% endif %}>mutual_funds</option>
-                        <option value="savings_account" {% if investment.investment_type == 'Savings' %}selected{% endif %}>savings_account</option>
-                        <option value="fixed_deposit" {% if investment.investment_type == 'Fixed Deposit' %}selected{% endif %}>fixed_deposit</option>
-                    </select>
-                </div>
+  <div class="container mt-5">
+    <h2>Edit Investment</h2>
+    <form method="POST" action="{{ url_for('edit_investment', investment_id=investment.investment_id) }}">
+      
+      <div class="mb-3">
+        <label for="investment_type" class="form-label">Investment Type:</label>
+        <select name="investment_type" class="form-select" required>
+          <option value="stocks" {% if investment.investment_type == 'Stocks' %}selected{% endif %}>Stocks</option>
+          <option value="bonds" {% if investment.investment_type == 'Bonds' %}selected{% endif %}>Bonds</option>
+          <option value="real_estate" {% if investment.investment_type == 'Real Estate' %}selected{% endif %}>Real Estate</option>
+          <option value="mutual_funds" {% if investment.investment_type == 'Mutual Funds' %}selected{% endif %}>Mutual Funds</option>
+          <option value="savings_account" {% if investment.investment_type == 'Savings' %}selected{% endif %}>Savings Account</option>
+          <option value="fixed_deposit" {% if investment.investment_type == 'Fixed Deposit' %}selected{% endif %}>Fixed Deposit</option>
+        </select>
+      </div>
 
-                
-                <div class="mb-3">
-                    <label for="investment_name" class="form-label">Investment Name</label>
-                    <input type="text" class="form-control" id="investment_name" name="investment_name" value="{{ investment.investment_name }}" required>
-                </div>
+      <div class="mb-3">
+        <label for="investment_name" class="form-label">Investment Name:</label>
+        <input type="text" name="investment_name" class="form-control" value="{{ investment.investment_name }}" required>
+      </div>
 
-                <!-- Purchase Date -->
-                <div class="mb-3">
-                    <label for="purchase_date" class="form-label">Purchase Date</label>
-                    <input type="date" class="form-control" id="purchase_date" name="purchase_date" value="{{ investment.purchase_date }}" required>
-                </div>
+      <div class="mb-3">
+        <label for="purchase_date" class="form-label">Purchase Date:</label>
+        <input type="date" name="purchase_date" class="form-control" value="{{ investment.purchase_date }}" required>
+      </div>
 
-                <!-- Purchase Price -->
-                <div class="mb-3">
-                    <label for="purchase_price" class="form-label">Purchase Price</label>
-                    <input type="number" class="form-control" id="purchase_price" name="purchase_price" value="{{ investment.purchase_price }}" step="0.01" required>
-                </div>
+      <div class="mb-3">
+        <label for="purchase_price" class="form-label">Purchase Price:</label>
+        <input type="number" name="purchase_price" class="form-control" value="{{ investment.purchase_price }}" required>
+      </div>
 
-                <!-- Quantity -->
-                <div class="mb-3">
-                    <label for="quantity" class="form-label">Quantity</label>
-                    <input type="number" class="form-control" id="quantity" name="quantity" value="{{ investment.quantity }}" required>
-                </div>
+      <div class="mb-3">
+        <label for="quantity" class="form-label">Quantity:</label>
+        <input type="number" name="quantity" id="quantity" class="form-control" value="{{ investment.quantity }}">
+      </div>
 
-                <!-- ROI -->
-                <div class="mb-3">
-                    <label for="roi" class="form-label">Return on Investment (ROI %)</label>
-                    <input type="number" class="form-control" id="roi" name="roi" value="{{ investment.roi }}" step="0.01">
-                </div>
+      <div class="mb-3">
+        <label for="roi" class="form-label">ROI (optional):</label>
+        <input type="number" step="0.01" name="roi" class="form-control" value="{{ investment.roi }}">
+      </div>
 
-                <!-- Returns -->
-                <div class="mb-3">
-                    <label for="current_value" class="form-label">current_value</label>
-                    <input type="number" class="form-control" id="current_value" name="current_value" value="{{ investment.current_value }}" step="0.01">
-                </div>
+      <div class="mb-3">
+        <label for="current_value" class="form-label">Current Market Value (optional):</label>
+        <input type="number" step="0.01" name="current_value" class="form-control" value="{{ investment.current_value }}">
+      </div>
 
-                <!-- End Date -->
-                <div class="mb-3">
-                    <label for="end_date" class="form-label">End Date</label>
-                    <input type="date" class="form-control" id="end_date" name="end_date" value="{{ investment.end_date }}">
-                </div>
+      <div class="mb-3">
+        <label for="end_date" class="form-label">End Date (optional):</label>
+        <input type="date" name="end_date" class="form-control" value="{{ investment.end_date }}">
+      </div>
 
-                <!-- Info -->
-                <div class="mb-3">
-                    <label for="info" class="form-label">Additional Info</label>
-                    <textarea class="form-control" id="info" name="info" rows="4">{{ investment.info }}</textarea>
-                </div>
+      <div class="mb-3">
+        <label for="info" class="form-label">Additional Information (optional):</label>
+        <textarea name="info" class="form-control">{{ investment.info }}</textarea>
+      </div>
 
-                <!-- Buttons -->
-                <div class="text-center">
-                    <button type="submit" class="btn btn-success me-2 px-4">Save Changes</button>
-                    <a href="{{ url_for('view_investments') }}" class="btn btn-secondary px-4">Cancel</a>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+      <div class="d-flex justify-content-between">
+        <button type="submit" class="btn btn-success">Save Changes</button>
+        <a href="{{ url_for('view_investments') }}" class="btn btn-secondary">Cancel</a>
+      </div>
+      
+    </form>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        let form = document.getElementById("investmentForm");
+
+        form.addEventListener("submit", function(event) {
+            let quantity = document.getElementById("quantity").value.trim();
+
+            if (quantity === "") {
+                alert("⚠️ Quantity cannot be empty. Please enter a value.");
+                event.preventDefault();
+            } else if (isNaN(quantity)) {
+                alert("⚠️ Invalid quantity. Please enter a valid number.");
+                event.preventDefault();
+            }
+        });
+    });
+  </script>
 </body>
 </html>

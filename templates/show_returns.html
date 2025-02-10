@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -63,8 +64,9 @@
             {% endif %}
         </div>
 
-        <p style="text-align:center; font-size:18px; font-weight:bold;">Calculated Returns: {% if results %} {{ results[0]['returns'] }} {% else %} No returns calculated yet. {% endif %}</p>
+        <p style="text-align:center; font-size:18px; font-weight:bold;">Calculated Returns: {% if results %} {{ results[0]['returns'] }} {% else %} No returns calculated yet. {% endif %}</p>
         <button type="submit">Calculate Returns</button>
+        <a href="{{ url_for('view_investments') }}" class="btn btn-secondary">Back</a>
     </form>
 
 </body>
