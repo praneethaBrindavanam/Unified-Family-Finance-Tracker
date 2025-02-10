@@ -1886,7 +1886,7 @@ def expense():
         filtered_expenses = expenses
         query = text("""
             SELECT DISTINCT b.categoryid,c.category_name 
-            FROM category c
+            FROM categories c
             JOIN expenses b ON c.category_id = b.categoryid
             """)
         result = db.session.execute(query)
