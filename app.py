@@ -338,7 +338,8 @@ def show_expenses():
     """Display all expenses and quick stats."""
     user_id = session.get('user_id')
     family_head_id = session.get('family_head_id')  # Get family_head_id from the session
-    print(user_id, family_head_id)
+    print("User  ID:", user_id)
+    print("Family Head ID:", family_head_id)
     
     selected_month = request.args.get('month')
     selected_category = request.args.get('category')
@@ -381,6 +382,12 @@ def show_expenses():
             .where(categories.c.user_id == 0)
         ).fetchall()
 
+        # Fetch distinct months for dropdown using MySQL DATE_FORMAT
+        months_query = conn.execute(
+            select(func.distinct(func.date_format(expenses.c.expensedate, '%Y-%m')))
+        ).fetchall()
+        months = [month[0] for month in months_query]  # Extracting the month strings
+
         # Base query to fetch all expenses, including user names
         query = select(
             expenses.c.ExpenseID,
@@ -401,7 +408,7 @@ def show_expenses():
         # Check if the user is the family head
         if user_id == family_head_id:
             # If user is family head, fetch all expenses for family members
-            query = query.where(users.c.family_head_id == family_head_id)  # Use users table for family_head_id
+            query = query.where(users.c.family_head_id == family_head_id)
         else:
             # If not, fetch only the user's expenses
             query = query.where(expenses.c.UserID == user_id)
@@ -410,7 +417,7 @@ def show_expenses():
         if selected_month:
             query = query.where(expenses.c.expensedate.like(f"{selected_month}-%"))
         if selected_category:
-            query = query.where(categories.c.category_name == selected_category)
+            query = query.where(categories.c.category_id == selected_category)  # Filter by category_id
         if start_date and end_date:
             query = query.where(expenses.c.expensedate.between(start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')))
         elif start_date:
@@ -420,58 +427,56 @@ def show_expenses():
 
         # Execute the query to fetch expenses
         result = conn.execute(query).fetchall()
-
-        # Fetch distinct months for dropdown
-        months_query = conn.execute(select(expenses.c.expensedate.distinct())).fetchall()
-        months = sorted(set(expensedate.strftime('%Y-%m') for expensedate, in months_query))
+        print("Fetched Expenses:", result)
 
         # Fetch min and max amount
         min_max_query = conn.execute(
             select(
-                db.func.min(expenses.c.amount).label('min_amount'),
-                db.func.max(expenses.c.amount).label('max_amount')
-            ).where(users.c.family_head_id == family_head_id)  # Apply family head filter here
+                func.min(expenses.c.amount).label('min_amount'),
+                func.max(expenses.c.amount).label('max_amount')
+            ).where(
+                (users.c.family_head_id == family_head_id) if user_id == family_head_id else (expenses.c.UserID == user_id)
+            )
         ).fetchone()
 
         # Set default values if query does not return results
         min_amount = min_max_query.min_amount if min_max_query and min_max_query.min_amount is not None else 0
         max_amount = min_max_query.max_amount if min_max_query and min_max_query.max_amount is not None else 10000  # Use a reasonable default
 
-        # Quick Stats Query
-        # Quick Stats Query
+        # Quick Stats Calculation
         if user_id == family_head_id:
             # If the user is the family head, calculate for all family members
             total_spent = conn.execute(
-                select(db.func.sum(distinct(expenses.c.amount)))  # Use distinct to sum unique amounts
+                select(func.sum(expenses.c.amount))
                 .join(users, expenses.c.UserID == users.c.user_id)
                 .where(users.c.family_head_id == family_head_id)
             ).scalar() or 0
 
             num_expenses = conn.execute(
-                select(db.func.count(distinct(expenses.c.ExpenseID)))  # Count distinct ExpenseIDs
+                select(func.count(expenses.c.ExpenseID))
                 .join(users, expenses.c.UserID == users.c.user_id)
                 .where(users.c.family_head_id == family_head_id)
             ).scalar() or 0
 
             avg_expense = conn.execute(
-                select(db.func.avg(distinct(expenses.c.amount)))  # Average of distinct amounts
+                select(func.avg(expenses.c.amount))
                 .join(users, expenses.c.UserID == users.c.user_id)
                 .where(users.c.family_head_id == family_head_id)
             ).scalar() or 0
         else:
             # If the user is not the family head, calculate only for the current user
             total_spent = conn.execute(
-                select(db.func.sum(distinct(expenses.c.amount)))  # Use distinct to sum unique amounts
+                select(func.sum(expenses.c.amount))
                 .where(expenses.c.UserID == user_id)
             ).scalar() or 0
 
             num_expenses = conn.execute(
-                select(db.func.count(distinct(expenses.c.ExpenseID)))  # Count distinct ExpenseIDs
+                select(func.count(expenses.c.ExpenseID))
                 .where(expenses.c.UserID == user_id)
             ).scalar() or 0
 
             avg_expense = conn.execute(
-                select(db.func.avg(distinct(expenses.c.amount)))  # Average of distinct amounts
+                select(func.avg(expenses.c.amount))
                 .where(expenses.c.UserID == user_id)
             ).scalar() or 0
 
@@ -483,21 +488,22 @@ def show_expenses():
         # Highest Spent Category with Name
         highest_spent_category = conn.execute(
             select(
-                categories.c.category_name,  # Retrieve category name
-                db.func.sum(distinct(expenses.c.amount)).label('total_amount')  # Sum of distinct amounts
+                categories.c.category_name,
+                func.sum(expenses.c.amount).label('total_amount')
             )
             .join(categories, categories.c.category_id == expenses.c.categoryid)
             .where(
                 (expenses.c.UserID == user_id) | 
-                (users.c.family_head_id == family_head_id)  # Apply family head filter here
+                (users.c.family_head_id == family_head_id)
             )
             .group_by(categories.c.category_name)
-            .order_by(db.func.sum(distinct(expenses.c.amount)).desc())  # Order by distinct amounts
+            .order_by(func.sum(expenses.c.amount).desc())
             .limit(1)
         ).fetchone()
 
         highest_spent_category_name = highest_spent_category[0] if highest_spent_category else 'None'
         highest_spent_category_total = highest_spent_category[1] if highest_spent_category else 0.0
+
     # Pass the stats to the template along with the expenses
     return render_template(
         'show_expenses.html',
